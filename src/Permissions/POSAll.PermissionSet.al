@@ -1,0 +1,48 @@
+permissionset 50200 "POS - ALL"
+{
+    Assignable = true;
+    Caption = 'POS - All';
+
+    Permissions =
+        tabledata "POS Setup" = RIMD,
+        tabledata "POS Payment Method" = RIMD,
+        tabledata "POS Receipt Header" = RIMD,
+        tabledata "POS Receipt Line" = RIMD,
+        tabledata "POS Receipt Payment" = RIMD,
+        tabledata "POS Cue" = RIMD,
+        tabledata "POS Theme" = RIMD,
+        tabledata "POS User Setup" = RIMD,
+        tabledata "POS User" = RIMD,
+        table "POS Setup" = X,
+        table "POS Payment Method" = X,
+        table "POS Receipt Header" = X,
+        table "POS Receipt Line" = X,
+        table "POS Receipt Payment" = X,
+        table "POS Cue" = X,
+        table "POS Theme" = X,
+        table "POS User Setup" = X,
+        table "POS User" = X,
+        codeunit "POS Management" = X,
+        codeunit "POS Json Builder" = X,
+        codeunit "POS Action Handler" = X,
+        codeunit "POS Post Receipt" = X,
+        codeunit "POS Theme Management" = X,
+        codeunit "POS Session" = X,
+        codeunit "POS Install" = X,
+        page "POS Register" = X,
+        page "POS Setup" = X,
+        page "POS Payment Methods" = X,
+        page "POS Receipts" = X,
+        page "POS Receipt Card" = X,
+        page "POS Receipt Subform" = X,
+        page "POS Receipt Payments Subform" = X,
+        page "POS Payments" = X,
+        page "POS Sales Lines" = X,
+        page "POS Activities" = X,
+        page "POS Recent Receipts" = X,
+        page "POS Role Center" = X,
+        page "POS Themes" = X,
+        page "POS Theme Card" = X,
+        page "POS Users" = X,
+        page "POS User Card" = X;
+}

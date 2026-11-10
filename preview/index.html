@@ -1,0 +1,148 @@
+<!doctype html>
+<!--
+  Browser preview of the register UI with a tiny fake "Business Central" behind it.
+  Open this file directly in a browser. It is NOT part of the AL app.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>POS preview</title>
+<link rel="stylesheet" href="../src/ControlAddIn/css/pos.css">
+</head>
+<body>
+<div id="controlAddIn"></div>
+<script>
+(function () {
+  var items = [
+    { no: '1896-S', description: 'ATHENS Desk', price: 1000.8, uom: 'PCS', tracked: true, stock: 12, category: 'DESK', vat: 15 },
+    { no: '1906-S', description: 'ATHENS Mobile Pedestal', price: 392.5, uom: 'PCS', tracked: true, stock: 3, category: 'DESK', vat: 15 },
+    { no: '1968-S', description: 'MEXICO Swivel Chair, black', price: 190.1, uom: 'PCS', tracked: true, stock: 0, category: 'CHAIR', vat: 15 },
+    { no: '1964-S', description: 'TOKYO Guest Chair, blue', price: 192.8, uom: 'PCS', tracked: true, stock: 40, category: 'CHAIR', vat: 15 },
+    { no: 'GL-1', description: 'Gift wrapping', price: 5, uom: 'PCS', tracked: false, stock: 0, category: '', vat: 0 }
+  ];
+  var barcodes = { '5449000000996': '1964-S' };
+  var customers = [{ no: 'CASH', name: 'Walk-in customer', phone: '', city: '' }, { no: '10000', name: 'Adatum Corporation', phone: '555-0100', city: 'Atlanta' }];
+  var cfg = { companyName: 'CRONUS Retail', footer: 'Thank you!', currency: 'EGP', maxDiscount: 20, precision: 0.01, idleMinutes: (/idle=([\d.]+)/.exec(location.search) || [0, 0])[1] * 1,
+    paymentMethods: [
+      { code: 'CASH', description: 'Cash', type: 'Cash', isCash: true, quickAmounts: '50,100,200,500' },
+      { code: 'CARD', description: 'Card', type: 'Card', isCash: false, quickAmounts: '' }],
+    categories: [{ code: 'DESK', description: 'Desks' }, { code: 'CHAIR', description: 'Chairs' }],
+    themeCode: (/theme=(\w+)/.exec(location.search) || [0, 'TEAL'])[1],
+    themes: [
+      { code: 'TEAL', name: 'Teal (light)', accent: '#0B6B63', accentText: '#FFFFFF', background: '#EEF0F2', panel: '#FFFFFF', text: '#1A1F26', muted: '#667085', border: '#E3E6EA', danger: '#B42318' },
+      { code: 'MIDNIGHT', name: 'Midnight (dark)', accent: '#2DD4BF', accentText: '#062A27', background: '#0F141A', panel: '#1A222B', text: '#E7ECF2', muted: '#98A2B3', border: '#2A3541', danger: '#F97066' },
+      { code: 'SUNSET', name: 'Sunset (warm)', accent: '#C2410C', accentText: '#FFFFFF', background: '#FBF3EA', panel: '#FFFFFF', text: '#2B1D14', muted: '#7A6250', border: '#EADBC9', danger: '#B42318' },
+      { code: 'BAD', name: 'Broken colors', accent: 'red', accentText: '', background: '#12', panel: null, text: '#1A1F26', muted: '#667085', border: '#E3E6EA', danger: '#B42318' }],
+    setupIssues: (location.search.indexOf('issues') > -1) ? ['Receipt Nos. is missing in POS Setup.'] : [] };
+  var seq = 1, receipt, held = [], posted = [];
+
+  function newReceipt() { receipt = { no: 'R' + String(seq++).padStart(5, '0'), status: 'Open', onHold: false, customerNo: 'CASH', customerName: 'Walk-in customer', lines: [], payments: [], cashier: 'HANY', date: '2026-11-10', time: '17:45', invoiceNo: '', itemCount: 0, subtotal: 0, discount: 0, vat: 0, total: 0, tendered: 0, change: 0 }; }
+  function r2(n) { return Math.round(n * 100) / 100; }
+  function calc() {
+    var base = {}, sub = 0, disc = 0, vat = 0;
+    receipt.lines.forEach(function (l) {
+      l.discountAmount = r2(l.qty * l.unitPrice * l.discountPct / 100);
+      l.lineAmount = r2(l.qty * l.unitPrice) - l.discountAmount;
+      sub += l.lineAmount; disc += l.discountAmount; base[l.vatPct] = (base[l.vatPct] || 0) + l.lineAmount;
+    });
+    Object.keys(base).forEach(function (p) { vat += r2(base[p] * p / 100); });
+    receipt.subtotal = r2(sub); receipt.discount = r2(disc); receipt.vat = r2(vat); receipt.total = r2(sub + vat);
+  }
+  function add(no, qty) {
+    var it = items.filter(function (i) { return i.no === no; })[0];
+    if (!it) throw new Error('Item ' + no + ' does not exist.');
+    var l = receipt.lines.filter(function (x) { return x.itemNo === no && !x.discountPct; })[0];
+    if (l) l.qty += qty; else receipt.lines.push({ lineNo: (receipt.lines.length + 1) * 10000, itemNo: no, description: it.description, uom: it.uom, qty: qty, unitPrice: it.price, discountPct: 0, discountAmount: 0, lineAmount: 0, vatPct: it.vat });
+    calc();
+  }
+  function products(text, cat) {
+    text = (text || '').toLowerCase();
+    return items.filter(function (i) { return (!cat || i.category === cat) && (!text || i.description.toLowerCase().indexOf(text) > -1 || i.no.toLowerCase().indexOf(text) === 0); });
+  }
+  // ---- mock session (the real one is the POS Session codeunit)
+  var users = { ADMIN: { pw: 'admin123', admin: true }, ANNA: { pw: 'anna1234', admin: false } };
+  var sess = { loggedIn: false, userName: '', isAdmin: false };
+  var fails = 0, lockedUntil = 0, noUsers = location.search.indexOf('nousers') > -1;
+  function sessionJson(extra) {
+    var o = { loggedIn: sess.loggedIn, userName: sess.userName, isAdmin: sess.isAdmin, hasUsers: !noUsers, themeCode: cfg.themeCode };
+    if (extra) o.error = extra;
+    return o;
+  }
+  function sessionActions(action, p) {
+    if (action === 'session') return { session: sessionJson() };
+    if (action === 'logout') { sess = { loggedIn: false, userName: '', isAdmin: false }; return { session: sessionJson() }; }
+    if (action === 'login') {
+      sess = { loggedIn: false, userName: '', isAdmin: false };
+      if (Date.now() < lockedUntil) return { session: sessionJson('Too many failed attempts. Try again in 30 seconds.') };
+      var u = noUsers ? null : users[String(p.userName || '').toUpperCase()];
+      if (u && u.pw === p.password) { fails = 0; sess = { loggedIn: true, userName: String(p.userName).toUpperCase(), isAdmin: u.admin }; receipt.cashier = sess.userName; return null; }
+      if (++fails >= 5) { lockedUntil = Date.now() + 30000; fails = 0; return { session: sessionJson('Too many failed attempts. Try again in 30 seconds.') }; }
+      return { session: sessionJson('Wrong user name or password.') };
+    }
+    return null;
+  }
+  function heldView() {
+    return held.filter(function (h) { return sess.isAdmin || h.cashier === sess.userName; })
+               .map(function (h) { var c = Object.assign({}, h); delete c.r; c.mine = h.cashier === sess.userName; return c; });
+  }
+  function handle(action, p) {
+    var res = {};
+    var early = sessionActions(action, p);
+    if (early) return early;
+    if (action === 'login') action = 'init';
+    if (!sess.loggedIn) throw new Error('Please sign in to continue.');
+    if ((action === 'clear' || action === 'discard-held' || (action === 'set-discount' && p.pct > 0)) && !sess.isAdmin) throw new Error('This action needs an administrator.');
+    switch (action) {
+      case 'init': res.products = products('', ''); res.held = heldView(); break;
+      case 'search-products': res.products = products(p.text, p.category); break;
+      case 'scan': {
+        var code = p.code, q = 1, m = /^(\d+(?:\.\d+)?)\*(.+)$/.exec(code);
+        if (m) { q = parseFloat(m[1]); code = m[2]; }
+        var no = barcodes[code] || (items.some(function (i) { return i.no.toLowerCase() === code.toLowerCase(); }) ? code.toUpperCase() : null);
+        if (no) add(no, q); else { res.products = products(code, ''); res.message = { type: 'info', text: 'No item matches "' + code + '". Showing similar items.' }; }
+        break; }
+      case 'add-item': add(p.itemNo, p.qty); break;
+      case 'set-qty': if (p.qty <= 0 && !sess.isAdmin) throw new Error('This action needs an administrator.'); receipt.lines = receipt.lines.filter(function (l) { if (l.lineNo === p.lineNo) { l.qty = p.qty; return p.qty > 0; } return true; }); calc(); break;
+      case 'set-discount': if (p.pct > 20) throw new Error('The maximum line discount is 20%.'); receipt.lines.forEach(function (l) { if (l.lineNo === p.lineNo) l.discountPct = p.pct; }); calc(); break;
+      case 'remove-line': if (!sess.isAdmin) throw new Error('This action needs an administrator.'); receipt.lines = receipt.lines.filter(function (l) { return l.lineNo !== p.lineNo; }); calc(); break;
+      case 'search-customers': res.customers = customers.filter(function (c) { return !p.text || c.name.toLowerCase().indexOf(p.text.toLowerCase()) > -1; }); break;
+      case 'set-customer': customers.forEach(function (c) { if (c.no === p.customerNo) { receipt.customerNo = c.no; receipt.customerName = c.name; } }); break;
+      case 'hold': held.push({ no: receipt.no, cashier: sess.userName, time: '17:46', customerName: receipt.customerName, itemCount: receipt.itemCount, total: receipt.total, r: receipt }); newReceipt(); res.message = { type: 'info', text: 'Receipt held.' }; res.held = heldView(); break;
+      case 'list-held': res.held = heldView(); res.openPanel = 'held'; break;
+      case 'recall': { var h = held.filter(function (x) { return x.no === p.receiptNo; })[0]; if (h.cashier !== sess.userName && !sess.isAdmin) throw new Error('Receipt ' + h.no + ' was put on hold by another cashier. Only an administrator can recall it.'); held = held.filter(function (x) { return x !== h; }); var was = h.cashier; receipt = h.r; receipt.cashier = sess.userName; res.message = { type: 'info', text: was !== sess.userName ? 'Receipt ' + h.no + ' taken over from ' + was + '.' : 'Receipt ' + h.no + ' recalled.' }; break; }
+      case 'discard-held': held = held.filter(function (x) { return x.no !== p.receiptNo; }); res.held = heldView(); res.openPanel = 'held'; break;
+      case 'clear': newReceipt(); res.message = { type: 'info', text: 'Sale cancelled.' }; break;
+      case 'checkout': {
+        if (location.search.indexOf('failpost') > -1) throw new Error('Item 1968-S: Inventory is negative after posting.');
+        var paid = 0; p.payments.forEach(function (x) { paid += x.amount; });
+        receipt.payments = p.payments.map(function (x) { return { method: x.method, description: x.method === 'CASH' ? 'Cash' : 'Card', amount: x.amount, applied: x.amount }; });
+        receipt.tendered = r2(paid); receipt.change = r2(Math.max(0, paid - receipt.total)); receipt.status = 'Posted'; receipt.invoiceNo = '103' + (1000 + seq);
+        res.receiptDone = receipt; newReceipt(); res.message = { type: 'success', text: 'Sale completed.' }; break; }
+      case 'set-theme': cfg.themeCode = p.code; break;
+      case 'reprint-last': res.receiptDone = posted[posted.length - 1] || receipt; break;
+      default: throw new Error('Unknown POS action ' + action + '.');
+    }
+    receipt.itemCount = receipt.lines.reduce(function (s, l) { return s + l.qty; }, 0);
+    res.receipt = receipt; res.heldCount = heldView().length; res.session = sessionJson();
+    return res;
+  }
+
+  newReceipt();
+  window.__log = [];
+  window.Microsoft = { Dynamics: { NAV: { InvokeExtensibilityMethod: function (name, args) {
+    window.__log.push([name].concat(args));
+    setTimeout(function () {
+      if (name === 'ControlReady') { Initialize(JSON.stringify(cfg)); Apply(JSON.stringify(handle('session', {}))); return; }
+      var res;
+      try { res = handle(args[0], JSON.parse(args[1])); }
+      catch (e) { res = { message: { type: 'error', text: e.message }, session: sessionJson() }; if (sess.loggedIn) { res.receipt = receipt; res.heldCount = heldView().length; } }
+      Apply(JSON.stringify(res));
+    }, 30);
+  } } } };
+})();
+</script>
+<script src="../src/ControlAddIn/js/theme.js"></script>
+<script src="../src/ControlAddIn/js/pos.js"></script>
+<script src="../src/ControlAddIn/js/startup.js"></script>
+</body>
+</html>

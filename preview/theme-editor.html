@@ -1,0 +1,20 @@
+<!doctype html>
+<!-- Browser preview of the theme editor with a fake Business Central behind it. Not part of the AL app. -->
+<html><head><meta charset="utf-8"><title>Theme editor preview</title>
+<link rel="stylesheet" href="../src/ControlAddIn/css/pos.css">
+<link rel="stylesheet" href="../src/ControlAddIn/css/themeeditor.css">
+</head><body style="margin:0;height:600px">
+<div id="controlAddIn" style="height:600px"></div>
+<script>
+window.__log = [];
+window.Microsoft = { Dynamics: { NAV: { InvokeExtensibilityMethod: function (name, args) {
+  window.__log.push([name].concat(args));
+  if (name === 'ControlReady') {
+    setTimeout(function () { SetTheme(JSON.stringify({ code: 'MIDNIGHT', name: 'Midnight', accent: '#2DD4BF', accentText: '#062A27', background: '#0F141A', panel: '#1A222B', text: '#E7ECF2', muted: '#98A2B3', border: '#2A3541', danger: '#F97066' })); }, 20);
+  }
+} } } };
+</script>
+<script src="../src/ControlAddIn/js/theme.js"></script>
+<script src="../src/ControlAddIn/js/themeeditor.js"></script>
+<script src="../src/ControlAddIn/js/themeeditor-start.js"></script>
+</body></html>

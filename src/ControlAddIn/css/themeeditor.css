@@ -1,0 +1,40 @@
+/* Layout of the theme editor. The preview itself is drawn by pos.css. */
+html, body, #controlAddIn { background: #fff; }
+.te { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; height: 100%; padding: 12px; box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; color: #1a1f26; }
+.te-pickers { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.te-row { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid #e3e6ea; border-radius: 10px; cursor: pointer; }
+.te-row:hover { background: #f6f7f9; }
+.te-row input[type="color"] { width: 44px; height: 36px; padding: 0; border: 1px solid #cfd4da; border-radius: 8px; background: none; cursor: pointer; }
+.te-txt { display: flex; flex-direction: column; min-width: 0; }
+.te-txt small { color: #667085; }
+.te-row code { font: 12px ui-monospace, Consolas, monospace; color: #475467; }
+.te-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+
+/* A fixed-size miniature of the register */
+.te-preview.pos { height: 410px; flex: none; border: 1px solid #d0d5dd; border-radius: 12px; font-size: 12px; }
+.te-preview .topbar { height: 40px; padding: 0 10px; }
+.te-preview .layout { grid-template-columns: minmax(0, 1fr) 236px; gap: 8px; padding: 8px; }
+.te-preview .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.te-preview .tile { min-height: 96px; padding: 8px; pointer-events: none; }
+.te-preview .tile .ini { width: 28px; height: 28px; font-size: 11px; }
+.te-preview .searchbar input { height: 36px; }
+.te-preview .btn { min-height: 34px; padding: 0 12px; pointer-events: none; }
+.te-preview .btn.ghost { min-height: 30px; }
+.te-preview .chip { pointer-events: none; height: 28px; }
+.te-preview .customer { min-height: 38px; padding: 0 10px; pointer-events: none; }
+.te-preview .line { grid-template-columns: minmax(0, 1fr) auto 52px; padding: 8px 10px; pointer-events: none; }
+.te-preview .l-qty .sq, .te-preview .l-tools { display: none; }
+.te-preview .who { overflow: hidden; }
+.te-preview .ticket-actions { grid-template-columns: 70px 1fr; padding: 8px 10px 10px; }
+.te-preview .ticket-actions .pay { min-height: 42px; font-size: 14px; }
+.te-preview .t-row.grand { font-size: 18px; }
+
+.te-checks { border: 1px solid #e3e6ea; border-radius: 10px; padding: 8px 12px; }
+.te-checks h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #667085; }
+.te-check { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 8px; align-items: center; padding: 3px 0; }
+.te-check .dot { width: 10px; height: 10px; border-radius: 50%; background: #12805c; }
+.te-check.bad .dot { background: #b42318; }
+.te-check em { color: #b42318; font-style: normal; font-weight: 600; }
+.te-check b { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 760px) { .te { grid-template-columns: 1fr; } }

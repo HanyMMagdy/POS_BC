@@ -1,0 +1,33 @@
+{
+  "id": "12ddfd6b-9583-413a-a546-ffacace977b3",
+  "name": "Retail POS",
+  "publisher": "Hany",
+  "version": "1.0.0.0",
+  "brief": "Point of Sale for Business Central with a JavaScript touch UI",
+  "description": "Retail POS register built on a JavaScript control add-in. Receipts are stored in POS tables and posted as standard sales invoices with customer payments.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "25.0.0.0",
+  "application": "25.0.0.0",
+  "idRanges": [
+    {
+      "from": 50200,
+      "to": 50249
+    }
+  ],
+  "runtime": "14.0",
+  "target": "Cloud",
+  "features": [
+    "NoImplicitWith"
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  }
+}
