@@ -226,6 +226,8 @@ button.row:hover { background: var(--hover); }
 .rcpt hr { border: 0; border-top: 1px dashed #9b9588; margin: 8px 0; }
 .rcpt .r-title { text-align: center; font-weight: 700; font-size: 15px; }
 .rcpt .r-center { text-align: center; }
+.rcpt .r-pic { text-align: center; margin: 4px 0; }
+.rcpt .r-pic img { max-width: 100%; max-height: 90px; object-fit: contain; }
 .rcpt .r-center.small { font-size: 11px; }
 .rcpt .r-row, .rcpt .r-q { display: flex; justify-content: space-between; gap: 8px; }
 .rcpt .r-total { font-weight: 700; font-size: 15px; }
@@ -274,6 +276,9 @@ button.row:hover { background: var(--hover); }
 .login-card h1 { margin: 0; font-size: 20px; text-align: center; color: var(--ink); }
 .login-sub { margin: 0 0 12px; text-align: center; color: var(--muted); font-size: 14px; }
 .login-card label { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 8px; }
+.login-row { display: flex; flex-direction: column; gap: 4px; }
+.login-row[hidden] { display: none; }
+.login-row select.text { appearance: auto; }
 .pass-wrap { position: relative; }
 .pass-wrap .text { padding-right: 64px; }
 .peek { position: absolute; right: 6px; top: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--accent); font-size: 13px; font-weight: 600; }

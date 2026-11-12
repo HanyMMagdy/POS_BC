@@ -39,6 +39,13 @@ page 50209 "POS Role Center"
 
         area(Processing)
         {
+            action(POSRUN)
+            {
+                ApplicationArea = All;
+                Caption = 'POS RUN';
+                Image = Form;
+                RunObject = page "POS Register";
+            }
             action(RecallHeld)
             {
                 ApplicationArea = All;
@@ -134,6 +141,20 @@ page 50209 "POS Role Center"
                     ApplicationArea = All;
                     Caption = 'Payments';
                     RunObject = page "POS Payments";
+                }
+                action(SectionStoreSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Store';
+                    RunObject = page "POS Store List";
+                    ToolTip = 'See today''s receipts and sales for every store.';
+                }
+                action(SectionTerminalSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Terminal';
+                    RunObject = page "POS Terminal List";
+                    ToolTip = 'See today''s receipts and sales for every terminal.';
                 }
             }
             group(Catalog)
@@ -237,6 +258,19 @@ page 50209 "POS Role Center"
                     Caption = 'No. Series';
                     RunObject = page "No. Series";
                 }
+                action(POSTerminal)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Terminal';
+                    RunObject = page "POS Terminal List";
+                }
+                action(POSStore)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Store';
+                    RunObject = page "POS Store List";
+                }
+                //"POS Store List"
             }
         }
     }

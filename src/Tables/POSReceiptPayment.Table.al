@@ -37,6 +37,16 @@ table 50204 "POS Receipt Payment"
         {
             Caption = 'Posting Date';
         }
+        field(10; "POS No."; Code[20])
+        {
+            Caption = 'POS No.';
+            TableRelation = "POS Terminal"."No.";
+        }
+        field(11; "Store No."; Code[20])
+        {
+            Caption = 'Store No.';
+            TableRelation = "POS Store"."No.";
+        }
     }
 
     keys
@@ -46,6 +56,10 @@ table 50204 "POS Receipt Payment"
             Clustered = true;
         }
         key(ByDate; "Payment Type", "Posting Date")
+        {
+            SumIndexFields = "Applied Amount";
+        }
+        key(ByStore; "Store No.", "Payment Type", "Posting Date")
         {
             SumIndexFields = "Applied Amount";
         }

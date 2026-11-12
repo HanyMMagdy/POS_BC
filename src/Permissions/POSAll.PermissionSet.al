@@ -13,6 +13,10 @@ permissionset 50200 "POS - ALL"
         tabledata "POS Theme" = RIMD,
         tabledata "POS User Setup" = RIMD,
         tabledata "POS User" = RIMD,
+        tabledata "POS Terminal" = RIMD,
+        tabledata "POS Store" = RIMD,
+        tabledata "Custom POS Hardware Profile" = RIMD,
+        tabledata "Tenant Media" = R,
         table "POS Setup" = X,
         table "POS Payment Method" = X,
         table "POS Receipt Header" = X,
@@ -22,6 +26,9 @@ permissionset 50200 "POS - ALL"
         table "POS Theme" = X,
         table "POS User Setup" = X,
         table "POS User" = X,
+        table "POS Terminal" = X,
+        table "POS Store" = X,
+        table "Custom POS Hardware Profile" = X,
         codeunit "POS Management" = X,
         codeunit "POS Json Builder" = X,
         codeunit "POS Action Handler" = X,
@@ -44,5 +51,9 @@ permissionset 50200 "POS - ALL"
         page "POS Themes" = X,
         page "POS Theme Card" = X,
         page "POS Users" = X,
-        page "POS User Card" = X;
+        page "POS User Card" = X,
+        page "POS Register Part" = X,
+        page "POS Cashier Role Center" = X,
+        page "POS Terminal List" = X,
+        page "POS Store List" = X;
 }

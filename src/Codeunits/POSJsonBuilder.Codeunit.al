@@ -13,6 +13,7 @@ codeunit 50201 "POS Json Builder"
         PaymentMethod: Record "POS Payment Method";
         ItemCategory: Record "Item Category";
         Theme: Record "POS Theme";
+        Terminal: Record "POS Terminal";
         ThemeMgt: Codeunit "POS Theme Management";
         Themes: JsonArray;
         Config: JsonObject;
@@ -40,9 +41,10 @@ codeunit 50201 "POS Json Builder"
 
         Config.Add('companyName', HeaderText);
         Config.Add('footer', POSSetup."Receipt Footer Text");
+        Config.Add('headerPicture', PictureToDataUrl(POSSetup."Receipt Header Picture".MediaId));
+        Config.Add('footerPicture', PictureToDataUrl(POSSetup."Receipt Footer Picture".MediaId));
         Config.Add('currency', Currency);
         Config.Add('maxDiscount', POSSetup."Max Line Discount %");
-        Config.Add('locationCode', POSSetup."Default Location Code");
         Config.Add('precision', POSMgt.GetRoundingPrecision());
 
         if PaymentMethod.FindSet() then
@@ -82,6 +84,7 @@ codeunit 50201 "POS Json Builder"
         Config.Add('themes', Themes);
         Config.Add('themeCode', ThemeMgt.GetUserThemeCode());
         Config.Add('idleMinutes', POSSetup."Auto Sign-out (minutes)");
+        Config.Add('hasTerminals', not Terminal.IsEmpty());
         exit(Config);
     end;
 
@@ -121,6 +124,9 @@ codeunit 50201 "POS Json Builder"
         Obj.Add('customerName', Header."Customer Name");
         Obj.Add('locationCode', Header."Location Code");
         Obj.Add('cashier', Header."Cashier ID");
+        Obj.Add('terminal', Header."POS No.");
+        Obj.Add('storeNo', Header."Store No.");
+        Obj.Add('store', StoreToJson(Header."Store No."));
         Obj.Add('date', Format(Header."Posting Date", 0, '<Year4>-<Month,2>-<Day,2>'));
         if Header."Posted At" <> 0DT then
             Obj.Add('time', Format(Header."Posted At", 0, '<Hours24,2>:<Minutes,2>'))
@@ -198,8 +204,8 @@ codeunit 50201 "POS Json Builder"
         foreach ItemNo in ItemNos do begin
             Item.Reset();
             if Item.Get(ItemNo) then begin
-                if POSSetup."Default Location Code" <> '' then
-                    Item.SetRange("Location Filter", POSSetup."Default Location Code");
+                if POSSession.GetLocationCode(POSSetup."Default Location Code") <> '' then
+                    Item.SetRange("Location Filter", POSSession.GetLocationCode(POSSetup."Default Location Code"));
                 Item.CalcFields(Inventory);
                 Clear(ItemObj);
                 ItemObj.Add('no', Item."No.");
@@ -216,11 +222,15 @@ codeunit 50201 "POS Json Builder"
     end;
 
     local procedure CollectItems(var Item: Record Item; var ItemNos: List of [Code[20]]; SearchMode: Text; CategoryCode: Code[20]; Limit: Integer; SearchText: Text)
+    var
+        ItemRef: Record "Item Reference";
     begin
         Item.Reset();
         Item.SetRange(Blocked, false);
         Item.SetRange("Sales Blocked", false);
-        Item.SetFilter(Type, '%1|%2|%3', Item.Type::Inventory, Item.Type::Service, Item.Type::"Non-Inventory");
+        //Item.Setfilter(Inventory, '>%1', 1);
+        //Item.SetFilter(Type, '%1|%2|%3', Item.Type::Inventory, Item.Type::Service, Item.Type::"Non-Inventory");
+        Item.SetFilter(Type, '%1', Item.Type::Inventory);
         if CategoryCode <> '' then
             Item.SetRange("Item Category Code", CategoryCode);
 
@@ -228,13 +238,24 @@ codeunit 50201 "POS Json Builder"
             'DESC':
                 Item.SetFilter("Search Description", '@*' + SearchText + '*');
             'NO':
-                Item.SetFilter("No.", '@' + SearchText + '*');
+                begin
+                    //Item.SetFilter("No.", '@' + SearchText + '*');
+                    ItemRef.Reset();
+                    ItemRef.SetFilter("Reference No.", '*%1*', SearchText);
+                    if ItemRef.FindSet() then begin
+                        if (ItemRef."Starting Date" >= Today) AND (ItemRef."Ending Date" <= Today) then
+                            Item.SetRange("No.", ItemRef."Item No.");
+                    end;
+                end;
         end;
 
         if Item.FindSet() then
             repeat
-                if ItemNos.Count() >= Limit then
+                if ItemNos.Count() >= Limit then begin
+                    //System.Clear(ItemNos);
                     exit;
+                end;
+                    
                 if not ItemNos.Contains(Item."No.") then
                     ItemNos.Add(Item."No.");
             until Item.Next() = 0;
@@ -297,6 +318,8 @@ codeunit 50201 "POS Json Builder"
         Header.SetCurrentKey("Cashier ID", Status, "On Hold");
         if not POSSession.IsAdmin() then
             Header.SetRange("Cashier ID", POSSession.GetCashierId());
+        // Only this store's held sales (plus any held before stores existed).
+        Header.SetFilter("Store No.", '%1|%2', POSSession.GetStoreNo(), '');
         Header.SetRange(Status, Header.Status::Open);
         Header.SetRange("On Hold", true);
         if Header.FindSet() then
@@ -308,12 +331,85 @@ codeunit 50201 "POS Json Builder"
                 HeldObj.Add('no', Header."No.");
                 HeldObj.Add('cashier', Header."Cashier ID");
                 HeldObj.Add('mine', Header."Cashier ID" = POSSession.GetCashierId());
+                HeldObj.Add('terminal', Header."POS No.");
                 HeldObj.Add('time', Format(Header."Created At", 0, '<Hours24,2>:<Minutes,2>'));
                 HeldObj.Add('customerName', Header."Customer Name");
                 HeldObj.Add('itemCount', Lines);
                 HeldObj.Add('total', Header."Total Amount");
                 Result.Add(HeldObj);
             until (Header.Next() = 0) or (Result.Count() >= 30);
+        exit(Result);
+    end;
+
+    /// <summary>A stored picture as a data URL the screen can show and print. Blank when there is none.</summary>
+    local procedure PictureToDataUrl(MediaId: Guid): Text
+    var
+        TenantMedia: Record "Tenant Media";
+        Base64Convert: Codeunit "Base64 Convert";
+        PictureStream: InStream;
+        MimeType: Text;
+    begin
+        if IsNullGuid(MediaId) then
+            exit('');
+        if not TenantMedia.Get(MediaId) then
+            exit('');
+        TenantMedia.CalcFields(Content);
+        if not TenantMedia.Content.HasValue() then
+            exit('');
+        MimeType := TenantMedia."Mime Type";
+        if not MimeType.StartsWith('image/') then
+            MimeType := 'image/png';
+        TenantMedia.Content.CreateInStream(PictureStream);
+        exit('data:' + MimeType + ';base64,' + Base64Convert.ToBase64(PictureStream));
+    end;
+
+    /// <summary>The store block printed on the receipt: name, address, phone and tax registration.</summary>
+    procedure StoreToJson(StoreNo: Code[20]): JsonObject
+    var
+        Store: Record "POS Store";
+        Obj: JsonObject;
+        AddressText: Text;
+    begin
+        if (StoreNo = '') or (not Store.Get(StoreNo)) then
+            exit(Obj);
+        AddressText := Store.Address;
+        if Store."Address 2" <> '' then
+            AddressText += ', ' + Store."Address 2";
+        if Store.City <> '' then begin
+            if AddressText <> '' then
+                AddressText += ', ';
+            AddressText += Store.City;
+        end;
+        Obj.Add('no', Store."No.");
+        Obj.Add('name', Store.Name);
+        Obj.Add('address', AddressText);
+        Obj.Add('phone', Store."Phone No.");
+        Obj.Add('taxNo', Store."Tax Registration No.");
+        exit(Obj);
+    end;
+
+    /// <summary>Active terminals the cashier can pick on the login screen. Shown before sign-in, so only names, no settings.</summary>
+    procedure BuildTerminals(): JsonArray
+    var
+        Terminal: Record "POS Terminal";
+        Store: Record "POS Store";
+        Result: JsonArray;
+        TerminalObj: JsonObject;
+    begin
+        Terminal.SetCurrentKey("Store No.", "No.");
+        Terminal.SetRange(Status, Terminal.Status::Active);
+        if Terminal.FindSet() then
+            repeat
+                if Store.Get(Terminal."Store No.") then
+                    if Store.Active then begin
+                        Clear(TerminalObj);
+                        TerminalObj.Add('no', Terminal."No.");
+                        TerminalObj.Add('description', Terminal.Description);
+                        TerminalObj.Add('storeNo', Store."No.");
+                        TerminalObj.Add('storeName', Store.Name);
+                        Result.Add(TerminalObj);
+                    end;
+            until (Terminal.Next() = 0) or (Result.Count() >= 100);
         exit(Result);
     end;
 

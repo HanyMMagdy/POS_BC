@@ -25,6 +25,14 @@ page 50211 "POS Payments"
                 {
                     ApplicationArea = All;
                 }
+                field("Store No."; Rec."Store No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("POS No."; Rec."POS No.")
+                {
+                    ApplicationArea = All;
+                }
                 field("Payment Method Code"; Rec."Payment Method Code")
                 {
                     ApplicationArea = All;

@@ -33,10 +33,27 @@
       { code: 'MIDNIGHT', name: 'Midnight (dark)', accent: '#2DD4BF', accentText: '#062A27', background: '#0F141A', panel: '#1A222B', text: '#E7ECF2', muted: '#98A2B3', border: '#2A3541', danger: '#F97066' },
       { code: 'SUNSET', name: 'Sunset (warm)', accent: '#C2410C', accentText: '#FFFFFF', background: '#FBF3EA', panel: '#FFFFFF', text: '#2B1D14', muted: '#7A6250', border: '#EADBC9', danger: '#B42318' },
       { code: 'BAD', name: 'Broken colors', accent: 'red', accentText: '', background: '#12', panel: null, text: '#1A1F26', muted: '#667085', border: '#E3E6EA', danger: '#B42318' }],
+    headerPicture: (location.search.indexOf('nopics') > -1) ? '' : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAABGCAIAAAB9pI6tAAAEl0lEQVR4Xu3df0zUdRzH8c/3vt/7KocTnEuPn6UzgQAvoy3CpCmXwliTrVpt1mTlZs2IYqNaUuYk/YPhVZg217RZOYtI5uYkfpwoCl3LNSbyYwSYcgfpH3H+uJO7+/Jt8HXfHXffu90WW9671+Mv+H4/d9/7fr/PffiMjS9c7PbXGAAVOionAjANQQMpCBpIEfzP5vb+r0idHPw/LHhzq3qimKGBFAQNpMxacqj853CA+5PmChkzNJCCoIEUBA2kIGggBUEDKQgaSEHQQAqCBlIQNJCCoIEUBA2kIGggBUEDKQgaSEHQQAqCBlIQNJCCoIEUBA2kIGggBUEDKQgaSEHQQAqCBlK0HzQTzFFTl1hZpm5Xv71hOXDxyoiy/dSl7jprM2OsNG/tvhc3p1e9e/3WTcbujZEZE3nhSOe5b3+5oG70f6HyVhzHLZg//72G788PDih7Aw7NGHsld822p9d7fJIo8Afb276zdTLGXl2TvyUv3zclOd2usmNH7RN/hxoJhEUadChen1T4WU3A3qJs08H2to2Z2d/MtKuOiRXn/fB62Z3JyRO//xb8QnVLZmLy4dKtT+z5WPOg5ozMLXlriz+vdbpdcTGGhjfeckxMcBx71vSYed9eryRVPFN0YHPppi8smiPPDPQSvp0w90sOgyjGivO+7uwoyjIFXN87nsmqxvrt68zhr3vvmD0xflGoMW+bC3ecqHe6XYwxp9u1o7G+YkNhecHG6lONXklijB3qOOP2enmdTnMkbjlt/3aGDmbOyGrp7Rn8azx18WKRFzySz39Mj310+QNLwl/TgvRHzg70hxqTZkzoHr2q7u2+djXdmCjLco99VNl4++7dlw7tZ0x7ZPhDQ7SLNGi9wDeVV6pnqxd45Wv/7TtP/mQbGSpe9eiq5JSS1TkJcfFPPbzS2j/rR7yg45V5NPiFyhY9L6w0Gh+v/ijCK8sxTpZlgb/3ecrWbyjONi1dGLd6d1XAOygjI3xbiFKRBh2w5HXU1CknHLCd1+lWLFn65N5djE0vdouyTAFB5zy07LJjeioNs4Z+x1z4cm5ebfNpzWvaP+4wpaTahoeUvaaU1L4xh0EUs5KSL/55pc7afLTr/NCeWsa0R0bpfYIIzfEaOnf5ikv2a8qxO4cGCzIy/T9HvMGwe9Nzlpam8B/O2t+b8+CyUGM+bf35k5IXFsbEMMbiYgzVJc9bWpsOXzhXVVyin5mnt+Wvk+QpxrRHhj80RLtIZ+hQ/FcOtpFhUeDV5a/L47lx62aaMUEZIzOm53lLS1PHzO/jAl6482SDeojB6+PZSSk6jpuaWSHoBb614n1lb9fwHx82/pgUv+h0eeWk1ycK/Jdnre0DfRzHpRkTbB/sGnNOHP+1S5Kmg27ruxw8MtpvGITH+f+fQvUJ0njgOdz/NHOd4yUHwH8LQQMpCBpIQdBACoIGUhA0kIKggRQEDaQgaCAFQQMpCBpIQdBACoIGUhA0kIKggRQEDaQgaCAFQQMpCBpIQdBACoIGUhA0kKL9XA71D8QBogtmaCAFQQMps56cBBDtMEMDKQgaSEHQQMo/Ec63SlWRyTUAAAAASUVORK5CYII=',
+    footerPicture: (location.search.indexOf('nopics') > -1) ? '' : 'data:image/png;base64,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',
     setupIssues: (location.search.indexOf('issues') > -1) ? ['Receipt Nos. is missing in POS Setup.'] : [] };
   var seq = 1, receipt, held = [], posted = [];
+  // ---- mock stores and terminals (the real ones are the POS Store / POS Terminal tables)
+  var noTerms = location.search.indexOf('noterminals') > -1;
+  var stores = {
+    MAIN: { no: 'MAIN', name: 'Main Store', address: '12 Nile Street, Cairo', phone: '02 555 0100', taxNo: '100-200-300' },
+    MALL: { no: 'MALL', name: 'City Mall Branch', address: 'Level 2, City Mall, Giza', phone: '02 555 0200', taxNo: '100-200-301' }
+  };
+  var terminals = noTerms ? {} : {
+    POS01: { no: 'POS01', description: 'Front counter', storeNo: 'MAIN', status: 'Active', managerOnly: false, autoLogoff: 0 },
+    POS02: { no: 'POS02', description: 'Garden counter', storeNo: 'MAIN', status: 'Active', managerOnly: false, autoLogoff: ((/logoffmin=([\d.]+)/.exec(location.search) || [0, 0])[1] * 1) },
+    POS03: { no: 'POS03', description: 'Spare', storeNo: 'MAIN', status: 'Maintenance', managerOnly: false, autoLogoff: 0 },
+    POS11: { no: 'POS11', description: 'Mall counter', storeNo: 'MALL', status: 'Active', managerOnly: false, autoLogoff: 0 },
+    POS12: { no: 'POS12', description: 'Mall back office', storeNo: 'MALL', status: 'Active', managerOnly: true, autoLogoff: 0 }
+  };
+  cfg.hasTerminals = !noTerms;
+  var recs = {};
 
-  function newReceipt() { receipt = { no: 'R' + String(seq++).padStart(5, '0'), status: 'Open', onHold: false, customerNo: 'CASH', customerName: 'Walk-in customer', lines: [], payments: [], cashier: 'HANY', date: '2026-11-10', time: '17:45', invoiceNo: '', itemCount: 0, subtotal: 0, discount: 0, vat: 0, total: 0, tendered: 0, change: 0 }; }
+  function newReceipt() { receipt = { no: 'R' + String(seq++).padStart(5, '0'), status: 'Open', onHold: false, customerNo: 'CASH', customerName: 'Walk-in customer', lines: [], payments: [], cashier: 'HANY', date: '2026-11-10', time: '17:45', invoiceNo: '', itemCount: 0, subtotal: 0, discount: 0, vat: 0, total: 0, tendered: 0, change: 0, terminal: '', storeNo: '', store: {} }; if (sess.loggedIn) stamp(); }
   function r2(n) { return Math.round(n * 100) / 100; }
   function calc() {
     var base = {}, sub = 0, disc = 0, vat = 0;
@@ -60,29 +77,61 @@
     return items.filter(function (i) { return (!cat || i.category === cat) && (!text || i.description.toLowerCase().indexOf(text) > -1 || i.no.toLowerCase().indexOf(text) === 0); });
   }
   // ---- mock session (the real one is the POS Session codeunit)
-  var users = { ADMIN: { pw: 'admin123', admin: true }, ANNA: { pw: 'anna1234', admin: false } };
-  var sess = { loggedIn: false, userName: '', isAdmin: false };
+  var users = { ADMIN: { pw: 'admin123', admin: true, store: '' }, ANNA: { pw: 'anna1234', admin: false, store: 'MAIN' }, BOB: { pw: 'bob12345', admin: false, store: 'MALL' } };
+  var sess = { loggedIn: false, userName: '', isAdmin: false, terminal: null };
   var fails = 0, lockedUntil = 0, noUsers = location.search.indexOf('nousers') > -1;
   function sessionJson(extra) {
-    var o = { loggedIn: sess.loggedIn, userName: sess.userName, isAdmin: sess.isAdmin, hasUsers: !noUsers, themeCode: cfg.themeCode };
+    var o = { loggedIn: sess.loggedIn, userName: sess.userName, isAdmin: sess.isAdmin, hasUsers: !noUsers, themeCode: cfg.themeCode,
+              idleMinutes: (sess.terminal && sess.terminal.autoLogoff > 0) ? sess.terminal.autoLogoff : cfg.idleMinutes };
+    if (sess.loggedIn && sess.terminal) {
+      o.terminal = { no: sess.terminal.no, description: sess.terminal.description, storeNo: sess.terminal.storeNo, storeName: stores[sess.terminal.storeNo].name };
+    } else if (!sess.loggedIn) {
+      o.terminals = Object.keys(terminals).map(function (k) { return terminals[k]; }).filter(function (t) { return t.status === 'Active'; })
+        .map(function (t) { return { no: t.no, description: t.description, storeNo: t.storeNo, storeName: stores[t.storeNo].name }; });
+    }
     if (extra) o.error = extra;
     return o;
   }
   function sessionActions(action, p) {
     if (action === 'session') return { session: sessionJson() };
-    if (action === 'logout') { sess = { loggedIn: false, userName: '', isAdmin: false }; return { session: sessionJson() }; }
+    if (action === 'logout') { stash(); sess = { loggedIn: false, userName: '', isAdmin: false, terminal: null }; return { session: sessionJson() }; }
     if (action === 'login') {
-      sess = { loggedIn: false, userName: '', isAdmin: false };
+      stash();
+      sess = { loggedIn: false, userName: '', isAdmin: false, terminal: null };
       if (Date.now() < lockedUntil) return { session: sessionJson('Too many failed attempts. Try again in 30 seconds.') };
       var u = noUsers ? null : users[String(p.userName || '').toUpperCase()];
-      if (u && u.pw === p.password) { fails = 0; sess = { loggedIn: true, userName: String(p.userName).toUpperCase(), isAdmin: u.admin }; receipt.cashier = sess.userName; return null; }
+      if (u && u.pw === p.password) {
+        fails = 0;
+        var term = null;
+        if (Object.keys(terminals).length) {
+          if (!p.terminalNo) return { session: sessionJson('Choose the terminal you are working at.') };
+          term = terminals[p.terminalNo];
+          if (!term) return { session: sessionJson('That terminal does not exist.') };
+          if (term.status !== 'Active') return { session: sessionJson('Terminal ' + term.no + ' is not active (status: ' + term.status + ').') };
+          if (u.store && u.store !== term.storeNo) return { session: sessionJson('User ' + String(p.userName).toUpperCase() + ' works in store ' + u.store + ' and cannot sign in to terminal ' + term.no + ' of store ' + term.storeNo + '.') };
+          if (term.managerOnly && !u.admin) return { session: sessionJson('Terminal ' + term.no + ' can only be used by an administrator.') };
+        }
+        sess = { loggedIn: true, userName: String(p.userName).toUpperCase(), isAdmin: u.admin, terminal: term };
+        var key = sess.userName + '|' + (term ? term.no : '');
+        receipt = recs[key] || (newReceipt(), receipt);
+        stamp();
+        return null;
+      }
       if (++fails >= 5) { lockedUntil = Date.now() + 30000; fails = 0; return { session: sessionJson('Too many failed attempts. Try again in 30 seconds.') }; }
       return { session: sessionJson('Wrong user name or password.') };
     }
     return null;
   }
+  function stash() { if (sess.loggedIn && receipt) recs[sess.userName + '|' + (sess.terminal ? sess.terminal.no : '')] = receipt; }
+  function stamp() {
+    receipt.cashier = sess.userName;
+    receipt.terminal = sess.terminal ? sess.terminal.no : '';
+    receipt.storeNo = sess.terminal ? sess.terminal.storeNo : '';
+    receipt.store = sess.terminal ? stores[sess.terminal.storeNo] : {};
+  }
+  function heldStore() { return sess.terminal ? sess.terminal.storeNo : ''; }
   function heldView() {
-    return held.filter(function (h) { return sess.isAdmin || h.cashier === sess.userName; })
+    return held.filter(function (h) { return (sess.isAdmin || h.cashier === sess.userName) && (!h.storeNo || h.storeNo === heldStore()); })
                .map(function (h) { var c = Object.assign({}, h); delete c.r; c.mine = h.cashier === sess.userName; return c; });
   }
   function handle(action, p) {
@@ -107,9 +156,9 @@
       case 'remove-line': if (!sess.isAdmin) throw new Error('This action needs an administrator.'); receipt.lines = receipt.lines.filter(function (l) { return l.lineNo !== p.lineNo; }); calc(); break;
       case 'search-customers': res.customers = customers.filter(function (c) { return !p.text || c.name.toLowerCase().indexOf(p.text.toLowerCase()) > -1; }); break;
       case 'set-customer': customers.forEach(function (c) { if (c.no === p.customerNo) { receipt.customerNo = c.no; receipt.customerName = c.name; } }); break;
-      case 'hold': held.push({ no: receipt.no, cashier: sess.userName, time: '17:46', customerName: receipt.customerName, itemCount: receipt.itemCount, total: receipt.total, r: receipt }); newReceipt(); res.message = { type: 'info', text: 'Receipt held.' }; res.held = heldView(); break;
+      case 'hold': held.push({ no: receipt.no, cashier: sess.userName, terminal: receipt.terminal, storeNo: receipt.storeNo, time: '17:46', customerName: receipt.customerName, itemCount: receipt.itemCount, total: receipt.total, r: receipt }); newReceipt(); res.message = { type: 'info', text: 'Receipt held.' }; res.held = heldView(); break;
       case 'list-held': res.held = heldView(); res.openPanel = 'held'; break;
-      case 'recall': { var h = held.filter(function (x) { return x.no === p.receiptNo; })[0]; if (h.cashier !== sess.userName && !sess.isAdmin) throw new Error('Receipt ' + h.no + ' was put on hold by another cashier. Only an administrator can recall it.'); held = held.filter(function (x) { return x !== h; }); var was = h.cashier; receipt = h.r; receipt.cashier = sess.userName; res.message = { type: 'info', text: was !== sess.userName ? 'Receipt ' + h.no + ' taken over from ' + was + '.' : 'Receipt ' + h.no + ' recalled.' }; break; }
+      case 'recall': { var h = held.filter(function (x) { return x.no === p.receiptNo; })[0]; if (h.storeNo && h.storeNo !== heldStore()) throw new Error('Receipt ' + h.no + ' was put on hold in store ' + h.storeNo + ' and cannot be recalled in this store.'); if (h.cashier !== sess.userName && !sess.isAdmin) throw new Error('Receipt ' + h.no + ' was put on hold by another cashier. Only an administrator can recall it.'); held = held.filter(function (x) { return x !== h; }); var was = h.cashier; receipt = h.r; stamp(); res.message = { type: 'info', text: was !== sess.userName ? 'Receipt ' + h.no + ' taken over from ' + was + '.' : 'Receipt ' + h.no + ' recalled.' }; break; }
       case 'discard-held': held = held.filter(function (x) { return x.no !== p.receiptNo; }); res.held = heldView(); res.openPanel = 'held'; break;
       case 'clear': newReceipt(); res.message = { type: 'info', text: 'Sale cancelled.' }; break;
       case 'checkout': {

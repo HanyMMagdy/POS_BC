@@ -24,6 +24,14 @@ page 50204 "POS Receipt Card"
                 {
                     ApplicationArea = All;
                 }
+                field("Store No."; Rec."Store No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("POS No."; Rec."POS No.")
+                {
+                    ApplicationArea = All;
+                }
                 field("Cashier ID"; Rec."Cashier ID")
                 {
                     ApplicationArea = All;

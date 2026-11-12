@@ -47,6 +47,7 @@ page 50200 "POS Register"
                 ApplicationArea = All;
                 Image = Document;
                 RunObject = page "POS Receipts";
+                visible = false;
             }
             action(Setup)
             {
@@ -54,6 +55,7 @@ page 50200 "POS Register"
                 ApplicationArea = All;
                 Image = Setup;
                 RunObject = page "POS Setup";
+                visible = false;
             }
             action(Users)
             {
@@ -61,6 +63,7 @@ page 50200 "POS Register"
                 ApplicationArea = All;
                 Image = Users;
                 RunObject = page "POS Users";
+                visible = false;
             }
             action(PaymentMethods)
             {
@@ -68,6 +71,7 @@ page 50200 "POS Register"
                 ApplicationArea = All;
                 Image = Payment;
                 RunObject = page "POS Payment Methods";
+                visible = false;
             }
         }
     }

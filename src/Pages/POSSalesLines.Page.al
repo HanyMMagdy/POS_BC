@@ -30,6 +30,14 @@ page 50208 "POS Sales Lines"
                     ApplicationArea = All;
                     ToolTip = 'Only lines of posted receipts are real sales. Filter this column to Posted.';
                 }
+                field("Store No."; Rec."Store No.")
+                {
+                    ApplicationArea = All;
+                }
+                field("POS No."; Rec."POS No.")
+                {
+                    ApplicationArea = All;
+                }
                 field("Cashier ID"; Rec."Cashier ID")
                 {
                     ApplicationArea = All;

@@ -13,6 +13,7 @@ codeunit 50200 "POS Management"
         CustomerBlockedErr: Label 'Customer %1 is blocked and cannot be used for a sale.', Comment = '%1 = customer no.';
         NotYourReceiptErr: Label 'Receipt %1 was put on hold by another cashier. Only an administrator can recall it.', Comment = '%1 = receipt no.';
         NotOnHoldErr: Label 'Receipt %1 is not on hold.', Comment = '%1 = receipt no.';
+        OtherStoreErr: Label 'Receipt %1 was put on hold in store %2 and cannot be recalled in this store.', Comment = '%1 = receipt no., %2 = store no.';
         UnknownPaymentMethodErr: Label 'Payment method %1 is not set up.', Comment = '%1 = payment method code';
         PaymentAmountErr: Label 'A payment amount must be greater than zero.';
 
@@ -28,6 +29,7 @@ codeunit 50200 "POS Management"
         Header.Reset();
         Header.SetCurrentKey("Cashier ID", Status, "On Hold");
         Header.SetRange("Cashier ID", POSSession.GetCashierId());
+        Header.SetRange("POS No.", POSSession.GetTerminalNo());
         Header.SetRange(Status, Header.Status::Open);
         Header.SetRange("On Hold", false);
         Found := Header.FindFirst();
@@ -47,6 +49,7 @@ codeunit 50200 "POS Management"
         Header.Reset();
         Header.SetCurrentKey("Cashier ID", Status, "On Hold");
         Header.SetRange("Cashier ID", POSSession.GetCashierId());
+        Header.SetRange("Store No.", POSSession.GetStoreNo());
         Header.SetRange(Status, Header.Status::Posted);
         if Header.FindLast() then begin
             Header.Reset();
@@ -73,6 +76,10 @@ codeunit 50200 "POS Management"
         if (Held.Status <> Held.Status::Open) or (not Held."On Hold") then
             Error(NotOnHoldErr, ReceiptNo);
 
+        // A held sale stays in its store. Sales held before stores existed (blank store) can be recalled anywhere.
+        if (Held."Store No." <> '') and (Held."Store No." <> POSSession.GetStoreNo()) then
+            Error(OtherStoreErr, ReceiptNo, Held."Store No.");
+
         // Cashiers recall their own sales. An administrator can also take over a sale held by another cashier;
         // it then belongs to the administrator and the receipt remembers who held it.
         if Held."Cashier ID" <> POSSession.GetCashierId() then begin
@@ -89,6 +96,10 @@ codeunit 50200 "POS Management"
             end else
                 Current.Delete(true);
 
+        // The sale continues at this terminal.
+        Held."POS No." := POSSession.GetTerminalNo();
+        Held."Store No." := POSSession.GetStoreNo();
+        Held."Location Code" := POSSession.GetLocationCode(Held."Location Code");
         Held."On Hold" := false;
         Held.Modify();
     end;
@@ -112,6 +123,7 @@ codeunit 50200 "POS Management"
         // Administrators see the held sales of every cashier; other users only their own.
         if not POSSession.IsAdmin() then
             Header.SetRange("Cashier ID", POSSession.GetCashierId());
+        Header.SetFilter("Store No.", '%1|%2', POSSession.GetStoreNo(), '');
         Header.SetRange(Status, Header.Status::Open);
         Header.SetRange("On Hold", true);
         exit(Header.Count());
@@ -390,6 +402,8 @@ codeunit 50200 "POS Management"
         Payment."Payment Method Code" := PaymentMethod.Code;
         Payment."Payment Type" := PaymentMethod.Type;
         Payment."Posting Date" := Header."Posting Date";
+        Payment."POS No." := Header."POS No.";
+        Payment."Store No." := Header."Store No.";
         Payment.Amount := Round(Amount, GetRoundingPrecision());
         Payment.Insert();
     end;
@@ -414,8 +428,11 @@ codeunit 50200 "POS Management"
         POSSetup: Record "POS Setup";
         PaymentMethod: Record "POS Payment Method";
         Customer: Record Customer;
+        Terminal: Record "POS Terminal";
     begin
         POSSetup.GetSetup();
+        if Terminal.IsEmpty() then
+            Issues.Add('No stores or POS terminals are defined. Sales are not linked to a store until you create them.');
         if POSSetup."Receipt Nos." = '' then
             Issues.Add('Receipt Nos. is missing in POS Setup.');
         if POSSetup."Default Customer No." = '' then

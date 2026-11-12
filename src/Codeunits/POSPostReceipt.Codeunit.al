@@ -97,6 +97,7 @@ codeunit 50203 "POS Post Receipt"
         SalesHeader.Validate("Document Date", Header."Posting Date");
         if Header."Location Code" <> '' then
             SalesHeader.Validate("Location Code", Header."Location Code");
+        SetStoreDimensions(Header."Store No.", SalesHeader);
         SalesHeader."External Document No." := Header."No.";
         SalesHeader."Posting Description" := CopyStr('POS ' + Header."No.", 1, MaxStrLen(SalesHeader."Posting Description"));
         SalesHeader.Modify(true);
@@ -180,6 +181,7 @@ codeunit 50203 "POS Post Receipt"
         PaymentMethod: Record "POS Payment Method";
         GenJnlLine: Record "Gen. Journal Line";
         SourceCodeSetup: Record "Source Code Setup";
+        Store: Record "POS Store";
         GenJnlPostLine: Codeunit "Gen. Jnl.-Post Line";
     begin
         PaymentMethod.Get(Payment."Payment Method Code");
@@ -202,6 +204,27 @@ codeunit 50203 "POS Post Receipt"
         GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
         GenJnlLine."Applies-to Doc. No." := PostedInvoiceNo;
         GenJnlLine."Source Code" := SourceCodeSetup."Cash Receipt Journal";
+        if Store.Get(Header."Store No.") then begin
+            if Store."Global Dimension 1 Code" <> '' then
+                GenJnlLine.Validate("Shortcut Dimension 1 Code", Store."Global Dimension 1 Code");
+            if Store."Global Dimension 2 Code" <> '' then
+                GenJnlLine.Validate("Shortcut Dimension 2 Code", Store."Global Dimension 2 Code");
+        end;
         GenJnlPostLine.RunWithCheck(GenJnlLine);
+    end;
+
+    /// <summary>The store's global dimensions (for example department or branch) go onto the invoice and its G/L entries.</summary>
+    local procedure SetStoreDimensions(StoreNo: Code[20]; var SalesHeader: Record "Sales Header")
+    var
+        Store: Record "POS Store";
+    begin
+        if StoreNo = '' then
+            exit;
+        if not Store.Get(StoreNo) then
+            exit;
+        if Store."Global Dimension 1 Code" <> '' then
+            SalesHeader.Validate("Shortcut Dimension 1 Code", Store."Global Dimension 1 Code");
+        if Store."Global Dimension 2 Code" <> '' then
+            SalesHeader.Validate("Shortcut Dimension 2 Code", Store."Global Dimension 2 Code");
     end;
 }

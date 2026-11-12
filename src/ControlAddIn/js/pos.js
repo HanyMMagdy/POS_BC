@@ -11,9 +11,9 @@
 
   // ---------------------------------------------------------------- state
   var S = {
-    cfg: { companyName: '', footer: '', currency: '', maxDiscount: 0, precision: 0.01, idleMinutes: 0,
+    cfg: { companyName: '', footer: '', headerPicture: '', footerPicture: '', currency: '', maxDiscount: 0, precision: 0.01, idleMinutes: 0,
            paymentMethods: [], categories: [], setupIssues: [] },
-    session: { loggedIn: false, userName: '', isAdmin: false, hasUsers: true },
+    session: { loggedIn: false, userName: '', isAdmin: false, hasUsers: true, terminal: null, terminals: [], idleMinutes: null },
     idleTimer: null,
     lastActivity: 0,
     receipt: null,
@@ -147,11 +147,46 @@
 
   // ------------------------------------------------------------------ session
   function submitLogin() {
-    var user = $('#login-user'), pass = $('#login-pass');
+    var user = $('#login-user'), pass = $('#login-pass'), term = $('#login-terminal');
     if (S.busy) { return; }
     setLoginError('');
-    send('login', { userName: user.value.trim(), password: pass.value });
+    var terminalNo = term && !term.closest('.login-row').hidden ? term.value : '';
+    if (terminalNo) { rememberTerminal(terminalNo); }
+    send('login', { userName: user.value.trim(), password: pass.value, terminalNo: terminalNo });
     pass.value = '';   // the password is never kept in the page after it was sent
+  }
+
+  // The terminal last used on this device is preselected on the login screen. Storage can be blocked, so it is optional.
+  function rememberTerminal(no) {
+    S.lastTerminal = no;
+    try { localStorage.setItem('pos.terminal', no); } catch (e) { /* ignore */ }
+  }
+
+  function lastTerminal() {
+    if (S.lastTerminal) { return S.lastTerminal; }
+    try { return localStorage.getItem('pos.terminal') || ''; } catch (e) { return ''; }
+  }
+
+  function renderTerminalPicker() {
+    var sel = $('#login-terminal');
+    if (!sel) { return; }
+    var list = S.session.terminals || [];
+    var row = sel.closest('.login-row');
+    // No terminals defined at all: the register works without one.
+    row.hidden = !list.length;
+    var keep = sel.value || lastTerminal();
+    var groups = {}, order = [];
+    list.forEach(function (t) {
+      if (!groups[t.storeNo]) { groups[t.storeNo] = { name: t.storeName || t.storeNo, items: [] }; order.push(t.storeNo); }
+      groups[t.storeNo].items.push(t);
+    });
+    sel.innerHTML = order.map(function (no) {
+      return '<optgroup label="' + esc(groups[no].name) + '">' + groups[no].items.map(function (t) {
+        return '<option value="' + esc(t.no) + '">' + esc(t.no) + (t.description ? ' - ' + esc(t.description) : '') + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+    var found = list.some(function (t) { return t.no === keep; });
+    sel.value = found ? keep : (list.length ? list[0].no : '');
   }
 
   function setLoginError(text) {
@@ -172,12 +207,16 @@
   function applySession(se) {
     var was = S.session.loggedIn;
     S.session = { loggedIn: !!se.loggedIn, userName: se.userName || '', isAdmin: !!se.isAdmin,
-                  hasUsers: se.hasUsers !== false };
+                  hasUsers: se.hasUsers !== false, terminal: se.terminal || null,
+                  terminals: se.terminals || [],
+                  idleMinutes: typeof se.idleMinutes === 'number' ? se.idleMinutes : null };
     if (se.themeCode && se.themeCode !== S.cfg.themeCode) { S.cfg.themeCode = se.themeCode; applyTheme(); }
     if (was && !S.session.loggedIn) { resetForLogout(); }
     renderSession();
     if (!S.session.loggedIn) {
-      setLoginError(se.error || (S.session.hasUsers ? '' : 'No users exist yet. Ask an administrator to create users in POS Users.'));
+      var noTerminal = S.cfg.hasTerminals && !S.session.terminals.length
+        ? 'No terminal is active. Ask an administrator to activate one in POS Terminals.' : '';
+      setLoginError(se.error || (S.session.hasUsers ? noTerminal : 'No users exist yet. Ask an administrator to create users in POS Users.'));
       var user = $('#login-user'), pass = $('#login-pass');
       if (user && pass) { (user.value ? pass : user).focus(); }
     } else {
@@ -193,6 +232,7 @@
     p.classList.toggle('logged-out', !S.session.loggedIn);
     $('#login').hidden = S.session.loggedIn;
     $('#login-company').textContent = S.cfg.companyName || 'Point of Sale';
+    if (!S.session.loggedIn) { renderTerminalPicker(); }
     $('#logoutBtn').hidden = !S.session.loggedIn;
     renderTopbar();
   }
@@ -204,7 +244,8 @@
 
   function scheduleIdle() {
     clearTimeout(S.idleTimer);
-    var minutes = Number(S.cfg.idleMinutes) || 0;
+    // The terminal can have its own auto sign-out time; the server sends the one that applies.
+    var minutes = Number(S.session.idleMinutes !== null ? S.session.idleMinutes : S.cfg.idleMinutes) || 0;
     if (!S.session.loggedIn || minutes <= 0) { return; }
     S.idleTimer = setTimeout(function () {
       if (!S.session.loggedIn) { return; }
@@ -323,6 +364,10 @@
               '<input id="login-pass" class="text" type="password" autocomplete="new-password" maxlength="100">' +
               '<button type="button" class="peek" data-act="peek-pass" tabindex="-1">Show</button>' +
             '</div>' +
+            '<div class="login-row" hidden>' +
+              '<label for="login-terminal">Terminal</label>' +
+              '<select id="login-terminal" class="text"></select>' +
+            '</div>' +
             '<div class="caps" id="login-caps" hidden>Caps Lock is on</div>' +
             '<div class="login-error" id="login-error" role="alert" hidden></div>' +
             '<button class="btn primary login-go" type="submit">Sign in</button>' +
@@ -343,8 +388,10 @@
   function renderTopbar() {
     if (!root) { return; }
     $('#company').textContent = S.cfg.companyName || 'Point of Sale';
+    var t = S.session.terminal;
+    var where = t ? (t.storeName || t.storeNo) + ' / ' + t.no : '';
     $('#who').textContent = S.session.loggedIn
-      ? S.session.userName + (S.session.isAdmin ? ' (Admin)' : '') + (S.receipt ? '   -   Receipt ' + S.receipt.no : '')
+      ? S.session.userName + (S.session.isAdmin ? ' (Admin)' : '') + (where ? '   -   ' + where : '') + (S.receipt ? '   -   Receipt ' + S.receipt.no : '')
       : '';
     $('#themeBtn').hidden = !(S.cfg.themes && S.cfg.themes.length > 1);
     var badge = $('#heldBadge');
@@ -548,8 +595,9 @@
   function heldModal() {
     var rows = S.held.length ? S.held.map(function (h) {
       var who = S.session.isAdmin ? ' - ' + (h.mine ? 'you' : esc(h.cashier)) : '';
+      var at = h.terminal ? ' - ' + esc(h.terminal) : '';
       return '<div class="row static">' +
-        '<span class="r-main"><b>' + esc(h.no) + '</b><small>' + esc(h.time) + who + ' - ' + esc(h.customerName) + ' - ' + qtyText(h.itemCount) + ' items</small></span>' +
+        '<span class="r-main"><b>' + esc(h.no) + '</b><small>' + esc(h.time) + who + at + ' - ' + esc(h.customerName) + ' - ' + qtyText(h.itemCount) + ' items</small></span>' +
         '<span class="r-side"><b>' + money(h.total) + '</b></span>' +
         (h.mine === false && !S.session.isAdmin ? '' : '<button class="btn small primary" data-act="recall" data-no="' + esc(h.no) + '">Recall</button>') +
         '<button class="btn small admin-only" data-act="discard-held" data-no="' + esc(h.no) + '">Discard</button></div>';
@@ -679,11 +727,22 @@
     var pays = (r.payments || []).map(function (p) {
       return '<div class="r-row"><span>' + esc(p.description) + '</span><span>' + money(p.amount) + '</span></div>';
     }).join('');
+    var st = r.store && r.store.name ? r.store : null;
+    // Pictures chosen in POS Setup. Only data: image URLs are accepted, so a bad value cannot load anything from the web.
+    var pic = function (src, cls) {
+      return /^data:image\/(png|jpeg|gif|bmp);base64,[A-Za-z0-9+\/=]+$/.test(src || '')
+        ? '<div class="r-pic ' + cls + '"><img alt="" src="' + src + '"></div>' : '';
+    };
     return '<div class="rcpt">' +
+      pic(S.cfg.headerPicture, 'r-pic-head') +
       '<div class="r-title">' + esc(S.cfg.companyName) + '</div>' +
+      (st ? '<div class="r-center">' + esc(st.name) + '</div>' : '') +
+      (st && st.address ? '<div class="r-center small">' + esc(st.address) + '</div>' : '') +
+      (st && st.phone ? '<div class="r-center small">Tel ' + esc(st.phone) + '</div>' : '') +
+      (st && st.taxNo ? '<div class="r-center small">Tax reg. ' + esc(st.taxNo) + '</div>' : '') +
       '<div class="r-center">Receipt ' + esc(r.no) + '</div>' +
       '<div class="r-center">' + esc(r.date) + ' ' + esc(r.time) + '</div>' +
-      '<div class="r-center">Cashier: ' + esc(r.cashier) + '</div>' +
+      '<div class="r-center">Cashier: ' + esc(r.cashier) + (r.terminal ? '   Terminal: ' + esc(r.terminal) : '') + '</div>' +
       (r.customerName ? '<div class="r-center">' + esc(r.customerName) + '</div>' : '') +
       '<hr>' + lines + '<hr>' +
       '<div class="r-row"><span>Subtotal</span><span>' + money(r.subtotal) + '</span></div>' +
@@ -694,6 +753,7 @@
       (r.change > 0 ? '<div class="r-row"><span>Change</span><span>' + money(r.change) + '</span></div>' : '') +
       (r.invoiceNo ? '<hr><div class="r-center small">Invoice ' + esc(r.invoiceNo) + '</div>' : '') +
       (S.cfg.footer ? '<div class="r-center">' + esc(S.cfg.footer) + '</div>' : '') +
+      pic(S.cfg.footerPicture, 'r-pic-foot') +
       '</div>';
   }
 
@@ -702,7 +762,8 @@
     '.rcpt{padding:4mm 2mm}.r-title{text-align:center;font-weight:bold;font-size:14px}' +
     '.r-center{text-align:center}.small{font-size:11px}hr{border:0;border-top:1px dashed #000;margin:6px 0}' +
     '.r-row,.r-q{display:flex;justify-content:space-between;gap:8px}.r-total{font-weight:bold;font-size:14px}' +
-    '.r-line{margin-bottom:4px}.r-d{word-break:break-word}';
+    '.r-line{margin-bottom:4px}.r-d{word-break:break-word}' +
+    '.r-pic{text-align:center;margin:4px 0}.r-pic img{max-width:100%;max-height:30mm;object-fit:contain}';
 
   function printReceipt(r) {
     var html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(r.no) + '</title><style>' +

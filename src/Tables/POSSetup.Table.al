@@ -66,6 +66,16 @@ table 50200 "POS Setup"
         {
             Caption = 'Receipt Footer Text';
         }
+        field(32; "Receipt Header Picture"; Media)
+        {
+            Caption = 'Receipt Header Picture';
+            ToolTip = 'A picture, for example the logo, printed at the top of every receipt.';
+        }
+        field(33; "Receipt Footer Picture"; Media)
+        {
+            Caption = 'Receipt Footer Picture';
+            ToolTip = 'A picture, for example a promotion or a bar code, printed at the bottom of every receipt.';
+        }
     }
 
     keys

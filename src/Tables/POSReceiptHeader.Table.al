@@ -124,6 +124,21 @@ table 50202 "POS Receipt Header"
             CalcFormula = count("POS Receipt Line" where("Receipt No." = field("No.")));
             Editable = false;
         }
+        field(10; "POS No."; Code[20])
+        {
+            Caption = 'POS No.';
+            Editable = false;
+            ToolTip = 'The terminal the sale was rung up on.';
+            TableRelation = "POS Terminal"."No.";
+        }
+        field(11; "Store No."; Code[20])
+        {
+            Caption = 'Store No.';
+            Editable = false;
+            ToolTip = 'The store the sale belongs to.';
+            TableRelation = "POS Store"."No.";
+        }
+
     }
 
     keys
@@ -139,6 +154,14 @@ table 50202 "POS Receipt Header"
         {
             SumIndexFields = "Total Amount";
         }
+        key(ByStore; "Store No.", Status, "Posting Date")
+        {
+            SumIndexFields = "Total Amount";
+        }
+        key(ByTerminal; "POS No.", Status, "Posting Date")
+        {
+            SumIndexFields = "Total Amount";
+        }
     }
 
     trigger OnInsert()
@@ -146,19 +169,25 @@ table 50202 "POS Receipt Header"
         POSSetup: Record "POS Setup";
         NoSeries: Codeunit "No. Series";
         POSSession: Codeunit "POS Session";
+        ReceiptNos: Code[20];
     begin
         POSSetup.GetSetup();
+        // The terminal and store come from the signed-in session. A terminal can have its own receipt number series.
+        "POS No." := POSSession.GetTerminalNo();
+        "Store No." := POSSession.GetStoreNo();
         if "No." = '' then begin
-            POSSetup.TestField("Receipt Nos.");
-            "No." := NoSeries.GetNextNo(POSSetup."Receipt Nos.", WorkDate());
+            ReceiptNos := POSSession.GetReceiptNoSeries(POSSetup."Receipt Nos.");
+            if ReceiptNos = '' then
+                POSSetup.TestField("Receipt Nos.");
+            "No." := NoSeries.GetNextNo(ReceiptNos, WorkDate());
         end;
         "Posting Date" := WorkDate();
         "Created At" := CurrentDateTime();
         "Cashier ID" := POSSession.GetCashierId();
         if "Customer No." = '' then
-            Validate("Customer No.", POSSetup."Default Customer No.");
+            Validate("Customer No.", POSSession.GetDefaultCustomerNo(POSSetup."Default Customer No."));
         if "Location Code" = '' then
-            "Location Code" := POSSetup."Default Location Code";
+            "Location Code" := POSSession.GetLocationCode(POSSetup."Default Location Code");
     end;
 
     trigger OnDelete()

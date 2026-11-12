@@ -29,6 +29,8 @@ JavaScript screen  <--Apply(json): receipt, products, ----+
 
 Profile **POS Manager** (role center page 50209). Pick it in *My Settings > Role Center*.
 
+**Cashier role center:** profile **POS Cashier** (role center page 50217) contains only the register screen (page part 50216), with no other menu, list or setup in front of the cashier. Assign the profile to cashier users in *Users > Profile* or *My Settings*. The register inside a role center is sized by the control add-in (780 px high); if it feels cramped on a small screen, use the *Full Screen Register* action, which opens the same register as a page. Untested inside Business Central, like the rest of the AL code.
+
 - **Cues:** receipts and sales today, cancelled today; cash / card / other payments today; sales in progress at registers and sales on hold. Each cue drills down to the matching list.
 - **Recent Sales:** the latest completed receipts. Choose the number to open the receipt, which shows lines, payments and a link to the posted invoice.
 - **Navigation:** New Sale, Receipts (all, completed, on hold), Items Sold, Payments, Customers, Items, Item Categories, Posted Sales Invoices, Customer / Item Ledger Entries, Bank Accounts, Chart of Accounts, POS Setup, Payment Methods, Locations, No. Series.
@@ -43,6 +45,29 @@ The register screen is colored entirely by a **theme**: eight colors (accent, te
 - **On the register**: the *Theme* button on the top bar switches theme instantly; the choice is stored per user (table *POS User Setup*).
 - Dark or light mode is detected from the background color. Invalid colors fall back to the defaults, so a theme can never make the screen unreadable.
 - `preview/theme-editor.html` shows the editor in a browser without Business Central.
+
+## Stores and terminals
+
+Objects: **POS Store** (table 50210, page 50219 *POS Store List*), **POS Terminal** (table 50209, page 50218 *POS Terminal List*) and *Custom POS Hardware Profile* (table 50211, not used yet).
+
+How they are used:
+
+| Where | What happens |
+|---|---|
+| Login screen | Asks for the terminal (active terminals only, grouped by store; the last one used on the device is preselected). If no terminal exists yet the login works as before. |
+| POS User | New field **Store No.**. A user with a store can only sign in to terminals of that store; blank = every store. |
+| Terminal | *Status* must be Active, *Manager Privileges Required* = administrators only, *Auto Logoff After (Min.)* overrides POS Setup, *Receipt No. Series* overrides POS Setup, *Location Code* overrides the store location. |
+| Store | *Location Code* (stock location of the sale and of the stock shown on the tiles), *Default Customer No.* (overrides POS Setup), *Global Dimension 1/2* (set on the sales invoice and the customer payments), name/address/phone/tax no. printed on the receipt, *Active*. |
+| Receipts and payments | Stamped with **Store No.** and **POS No.** when created. Receipt lists, items sold, payments and recent sales show both. |
+| Held sales | Limited to the store you are signed in to (plus sales held before stores existed). A sale held at one terminal can be recalled at another terminal of the same store. |
+| Current sale | One open sale per cashier **and terminal**. |
+| Role center | Store filter above the cues, *Sales by Store* and *Sales by Terminal* (the two lists show today's receipts and sales). |
+
+A store or terminal that receipts refer to cannot be deleted; set it to inactive instead.
+
+## Receipt pictures
+
+In **POS Setup**, group *Receipt Pictures*, choose a **header picture** (for example the logo) and a **footer picture** (for example a promotion) with the actions *Import Header Picture* / *Import Footer Picture* (PNG, JPG, GIF or BMP, up to 500 KB each; *Remove ...* clears them). They are printed at the top and bottom of every receipt, on the receipt preview and on the printout. With no picture chosen nothing changes. The register receives the pictures once, when it opens, so a changed picture shows after the register is reopened.
 
 ## Login and users
 

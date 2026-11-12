@@ -180,7 +180,7 @@ codeunit 50202 "POS Action Handler"
             LoginError := EnterCredentialsErr;
             exit(false);
         end;
-        exit(POSSession.TryLogin(UserName, Password, LoginError));
+        exit(POSSession.TryLogin(UserName, Password, GetText('terminalNo'), LoginError));
     end;
 
     /// <summary>Every response carries the session, so the UI always knows whether it is signed in and as whom.</summary>
@@ -193,13 +193,25 @@ codeunit 50202 "POS Action Handler"
     local procedure BuildSession(): JsonObject
     var
         POSUser: Record "POS User";
+        POSSetup: Record "POS Setup";
+        TerminalObj: JsonObject;
         Obj: JsonObject;
     begin
+        POSSetup.GetSetup();
         Obj.Add('loggedIn', POSSession.IsActive());
         Obj.Add('userName', POSSession.GetUserName());
         Obj.Add('isAdmin', POSSession.IsAdmin());
         Obj.Add('hasUsers', not POSUser.IsEmpty());
         Obj.Add('themeCode', ThemeMgt.GetUserThemeCode());
+        Obj.Add('idleMinutes', POSSession.GetAutoLogoffMinutes(POSSetup."Auto Sign-out (minutes)"));
+        if POSSession.IsActive() then begin
+            TerminalObj.Add('no', POSSession.GetTerminalNo());
+            TerminalObj.Add('description', POSSession.GetTerminalDescription());
+            TerminalObj.Add('storeNo', POSSession.GetStoreNo());
+            TerminalObj.Add('storeName', POSSession.GetStoreName());
+            Obj.Add('terminal', TerminalObj);
+        end else
+            Obj.Add('terminals', JsonBuilder.BuildTerminals());
         if LoginError <> '' then
             Obj.Add('error', LoginError);
         exit(Obj);

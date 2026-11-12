@@ -22,6 +22,10 @@ page 50214 "POS Users"
                 {
                     ApplicationArea = All;
                 }
+                field("Store No."; Rec."Store No.")
+                {
+                    ApplicationArea = All;
+                }
                 field(PasswordStatus; PasswordStatusText)
                 {
                     ApplicationArea = All;

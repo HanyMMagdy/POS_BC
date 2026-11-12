@@ -23,6 +23,10 @@ page 50215 "POS User Card"
                 {
                     ApplicationArea = All;
                 }
+                field("Store No."; Rec."Store No.")
+                {
+                    ApplicationArea = All;
+                }
                 field(PasswordStatus; PasswordStatusText)
                 {
                     ApplicationArea = All;

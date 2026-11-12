@@ -81,6 +81,20 @@ table 50203 "POS Receipt Line"
             CalcFormula = lookup("POS Receipt Header"."Cashier ID" where("No." = field("Receipt No.")));
             Editable = false;
         }
+        field(23; "Store No."; Code[20])
+        {
+            Caption = 'Store No.';
+            FieldClass = FlowField;
+            CalcFormula = lookup("POS Receipt Header"."Store No." where("No." = field("Receipt No.")));
+            Editable = false;
+        }
+        field(24; "POS No."; Code[20])
+        {
+            Caption = 'POS No.';
+            FieldClass = FlowField;
+            CalcFormula = lookup("POS Receipt Header"."POS No." where("No." = field("Receipt No.")));
+            Editable = false;
+        }
     }
 
     keys

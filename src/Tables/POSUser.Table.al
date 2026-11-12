@@ -27,6 +27,12 @@ table 50208 "POS User"
             Caption = 'Is Admin';
             ToolTip = 'Administrators can give discounts, cancel sales and discard held receipts on the register.';
         }
+        field(4; "Store No."; Code[20])
+        {
+            Caption = 'Store No.';
+            TableRelation = "POS Store";
+            ToolTip = 'The store this user works in. The user can only sign in to terminals of this store. Leave blank to allow every store.';
+        }
     }
 
     keys

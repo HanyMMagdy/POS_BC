@@ -9,6 +9,26 @@ page 50206 "POS Activities"
     {
         area(Content)
         {
+            group(StoreSelection)
+            {
+                ShowCaption = false;
+
+                field(StoreFilterField; StoreFilter)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Store';
+                    TableRelation = "POS Store"."No.";
+                    ToolTip = 'Show the figures of one store. Leave blank to see all stores.';
+
+                    trigger OnValidate()
+                    begin
+                        Rec.SetRange("Store Filter");
+                        if StoreFilter <> '' then
+                            Rec.SetRange("Store Filter", StoreFilter);
+                        CurrPage.Update(false);
+                    end;
+                }
+            }
             cuegroup(SalesToday)
             {
                 Caption = 'Sales Today';
@@ -122,6 +142,7 @@ page 50206 "POS Activities"
 
     var
         HoldStyle: Text;
+        StoreFilter: Code[20];
 
     trigger OnOpenPage()
     begin
@@ -149,6 +170,8 @@ page 50206 "POS Activities"
         Receipt.SetRange(Status, ReceiptStatus);
         if ReceiptStatus = ReceiptStatus::Open then
             Receipt.SetRange("On Hold", OnHold);
+        if StoreFilter <> '' then
+            Receipt.SetRange("Store No.", StoreFilter);
         if TodayOnly then
             Receipt.SetRange("Posting Date", WorkDate());
         Page.Run(Page::"POS Receipts", Receipt);
@@ -159,6 +182,8 @@ page 50206 "POS Activities"
         Payment: Record "POS Receipt Payment";
     begin
         Payment.SetRange("Payment Type", PaymentType);
+        if StoreFilter <> '' then
+            Payment.SetRange("Store No.", StoreFilter);
         Payment.SetRange("Posting Date", WorkDate());
         Page.Run(Page::"POS Payments", Payment);
     end;
