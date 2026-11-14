@@ -9,26 +9,7 @@ page 50206 "POS Activities"
     {
         area(Content)
         {
-            group(StoreSelection)
-            {
-                ShowCaption = false;
 
-                field(StoreFilterField; StoreFilter)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Store';
-                    TableRelation = "POS Store"."No.";
-                    ToolTip = 'Show the figures of one store. Leave blank to see all stores.';
-
-                    trigger OnValidate()
-                    begin
-                        Rec.SetRange("Store Filter");
-                        if StoreFilter <> '' then
-                            Rec.SetRange("Store Filter", StoreFilter);
-                        CurrPage.Update(false);
-                    end;
-                }
-            }
             cuegroup(SalesToday)
             {
                 Caption = 'Sales Today';

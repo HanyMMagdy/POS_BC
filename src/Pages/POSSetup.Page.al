@@ -50,6 +50,10 @@ page 50201 "POS Setup"
                 {
                     ApplicationArea = All;
                 }
+                field("Start Full Screen"; Rec."Start Full Screen")
+                {
+                    ApplicationArea = All;
+                }
             }
             group(ReceiptPrinting)
             {

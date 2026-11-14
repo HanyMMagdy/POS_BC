@@ -123,10 +123,34 @@ page 50204 "POS Receipt Card"
                         Page.Run(Page::"Posted Sales Invoice", SalesInvoiceHeader);
                 end;
             }
+            action(PrintInvoice)
+            {
+                Caption = 'Print Payment';
+                ApplicationArea = All;
+                Image = Print;
+                //Enabled = Rec."Posted Sales Invoice No." <> '';
+                ToolTip = 'Open the posted sales invoice created for this receipt.';
+
+                trigger OnAction()
+                var
+                    POSRectHdr: Record "POS Receipt Header";
+                    POSRecpt: Report "POS Receipt";
+                begin
+                    POSRectHdr.Reset();
+                    POSRectHdr.SetRange("No.", Rec."No.");
+                    if POSRectHdr.FindFirst() then begin
+                        POSRecpt.SetTableView(POSRectHdr);
+                        POSRecpt.Run();
+                    end;
+                end;
+            }
         }
         area(Promoted)
         {
             actionref(PostedInvoice_Promoted; PostedInvoice)
+            {
+            }
+            actionref(PrintInvoice_Promoted; PrintInvoice)
             {
             }
         }

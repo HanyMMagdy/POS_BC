@@ -41,6 +41,7 @@ codeunit 50201 "POS Json Builder"
 
         Config.Add('companyName', HeaderText);
         Config.Add('footer', POSSetup."Receipt Footer Text");
+        Config.Add('startFullScreen', POSSetup."Start Full Screen");
         Config.Add('headerPicture', PictureToDataUrl(POSSetup."Receipt Header Picture".MediaId));
         Config.Add('footerPicture', PictureToDataUrl(POSSetup."Receipt Footer Picture".MediaId));
         Config.Add('currency', Currency);

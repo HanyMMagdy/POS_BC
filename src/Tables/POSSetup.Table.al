@@ -76,6 +76,11 @@ table 50200 "POS Setup"
             Caption = 'Receipt Footer Picture';
             ToolTip = 'A picture, for example a promotion or a bar code, printed at the bottom of every receipt.';
         }
+        field(34; "Start Full Screen"; Boolean)
+        {
+            Caption = 'Start Full Screen';
+            ToolTip = 'Opens the register over the whole Business Central window when it starts, and in the browser''s full screen (no tabs or address bar) after the first click or Enter key. Cashiers can switch back with the Exit full screen button.';
+        }
     }
 
     keys

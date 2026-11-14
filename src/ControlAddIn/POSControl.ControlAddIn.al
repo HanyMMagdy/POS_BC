@@ -27,4 +27,7 @@ controladdin "POS Control"
 
     /// <summary>Sends the result of an action: the current receipt and whatever else changed.</summary>
     procedure Apply(ResponseJson: Text);
+    procedure enterScreen();
+    /// Puts it back into the page.
+    procedure leaveScreen();
 }
