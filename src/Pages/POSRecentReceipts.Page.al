@@ -57,7 +57,7 @@ page 50207 "POS Recent Receipts"
                 field("Posted Sales Invoice No."; Rec."Posted Sales Invoice No.")
                 {
                     ApplicationArea = All;
-                }
+                } 
             }
         }
     }

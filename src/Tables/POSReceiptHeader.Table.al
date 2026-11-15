@@ -138,6 +138,10 @@ table 50202 "POS Receipt Header"
             ToolTip = 'The store the sale belongs to.';
             TableRelation = "POS Store"."No.";
         }
+        field(12; "Delivery Status"; Enum "Delivery Status")
+        {
+            Editable = false;
+        }
 
     }
 

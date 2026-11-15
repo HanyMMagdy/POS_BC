@@ -86,6 +86,10 @@ page 50203 "POS Receipts"
                 {
                     ApplicationArea = All;
                 }
+                field("Delivery Status"; Rec."Delivery Status")
+                {
+                    ToolTip = 'Specifies the value of the Delivery Status field.', Comment = '%';
+                }
             }
         }
         area(FactBoxes)

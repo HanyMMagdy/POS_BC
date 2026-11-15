@@ -57,6 +57,10 @@ page 50204 "POS Receipt Card"
                 {
                     ApplicationArea = All;
                 }
+                field("Delivery Status"; Rec."Delivery Status")
+                {
+                    ToolTip = 'Specifies the value of the Delivery Status field.', Comment = '%';
+                }
                 field("Posted Sales Invoice No."; Rec."Posted Sales Invoice No.")
                 {
                     ApplicationArea = All;

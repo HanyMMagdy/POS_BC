@@ -56,8 +56,8 @@ table 50210 "POS Store"
         field(11; "Store Type"; Option)
         {
             Caption = 'Store Type';
-            OptionMembers = Retail,Hospitality,"Web Store",Warehouse;
-            OptionCaption = 'Retail,Hospitality,Web Store,Warehouse';
+            OptionMembers = Retail,Hospitality,"Web Store",Warehouse,DeLivery;
+            OptionCaption = 'Retail,Hospitality,Web Store,Warehouse,DeLivery';
         }
 
         // --- Inventory & Accounting Links ---
