@@ -26,12 +26,17 @@ page 50214 "POS Users"
                 {
                     ApplicationArea = All;
                 }
+                field("Screen Design"; Rec."Screen Design")
+                {
+                    ApplicationArea = All;
+                }
                 field(PasswordStatus; PasswordStatusText)
                 {
                     ApplicationArea = All;
                     Caption = 'Password';
                     ToolTip = 'Shows whether a password has been set. Users without a password cannot sign in.';
                 }
+                
             }
         }
     }

@@ -27,6 +27,10 @@ page 50215 "POS User Card"
                 {
                     ApplicationArea = All;
                 }
+                field("Screen Design"; Rec."Screen Design")
+                {
+                    ApplicationArea = All;
+                }
                 field(PasswordStatus; PasswordStatusText)
                 {
                     ApplicationArea = All;

@@ -54,6 +54,10 @@ page 50201 "POS Setup"
                 {
                     ApplicationArea = All;
                 }
+                field("Default Screen Design"; Rec."Default Screen Design")
+                {
+                    ApplicationArea = All;
+                }
             }
             group(ReceiptPrinting)
             {

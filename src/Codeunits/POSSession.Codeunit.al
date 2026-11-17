@@ -18,6 +18,7 @@ codeunit 50206 "POS Session"
         CurrentDefaultCustomerNo: Code[20];
         CurrentReceiptNos: Code[20];
         CurrentAutoLogoff: Integer;
+        CurrentDesign: Enum "POS Screen Design";
         Active: Boolean;
         FailedAttempts: Integer;
         LockedUntil: DateTime;
@@ -89,6 +90,20 @@ codeunit 50206 "POS Session"
         CurrentDefaultCustomerNo := '';
         CurrentReceiptNos := '';
         CurrentAutoLogoff := 0;
+        CurrentDesign := CurrentDesign::" ";
+    end;
+
+    procedure SetDesign(Design: Enum "POS Screen Design")
+    begin
+        CurrentDesign := Design;
+    end;
+
+    /// <summary>The screen design of this session. Classic when none was set.</summary>
+    procedure GetDesign(): Enum "POS Screen Design"
+    begin
+        if CurrentDesign = CurrentDesign::" " then
+            exit(CurrentDesign::Classic);
+        exit(CurrentDesign);
     end;
 
     /// <summary>

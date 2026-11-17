@@ -273,5 +273,32 @@ page 50209 "POS Role Center"
                 //"POS Store List"
             }
         }
+
+        area(Reporting)
+        {
+            group(POScashierstorereports)
+            {
+                Caption = 'POS (cashier and store reports)';
+                Image = Report;
+                action(POSDailySalesSummary)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Daily Sales Summary';
+                    RunObject = report "POS Daily Sales Summary";
+                }
+                action(POSPaymentMethodSummary)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Payment Method Summary';
+                    RunObject = report "POS Payment Method Summary";
+                }
+                action(POSCashierSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Cashier Sales';
+                    RunObject = report "POS Cashier Sales";
+                }
+            }
+        }
     }
 }

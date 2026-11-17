@@ -81,6 +81,11 @@ table 50200 "POS Setup"
             Caption = 'Start Full Screen';
             ToolTip = 'Opens the register over the whole Business Central window when it starts, and in the browser''s full screen (no tabs or address bar) after the first click or Enter key. Cashiers can switch back with the Exit full screen button.';
         }
+        field(35; "Default Screen Design"; Enum "POS Screen Design")
+        {
+            Caption = 'Default Screen Design';
+            ToolTip = 'The register screen layout for cashiers who did not pick one and have none set on their POS user. Leave blank for Classic.';
+        }
     }
 
     keys

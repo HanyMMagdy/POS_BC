@@ -35,6 +35,7 @@ permissionset 50200 "POS - ALL"
         codeunit "POS Post Receipt" = X,
         codeunit "POS Theme Management" = X,
         codeunit "POS Session" = X,
+        codeunit "POS Screen Design Mgt" = X,
         codeunit "POS Install" = X,
         page "POS Register" = X,
         page "POS Setup" = X,

@@ -33,6 +33,11 @@ table 50208 "POS User"
             TableRelation = "POS Store";
             ToolTip = 'The store this user works in. The user can only sign in to terminals of this store. Leave blank to allow every store.';
         }
+        field(5; "Screen Design"; Enum "POS Screen Design")
+        {
+            Caption = 'Screen Design';
+            ToolTip = 'The register screen layout this user gets when no screen is picked on the login form. Cashiers can change it themselves with the Screen button. Leave blank to use the one in POS Setup.';
+        }
     }
 
     keys

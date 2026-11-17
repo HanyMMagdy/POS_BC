@@ -16,6 +16,8 @@
       paymentMethods: [], categories: [], setupIssues: []
     },
     session: { loggedIn: false, userName: '', isAdmin: false, hasUsers: true, terminal: null, terminals: [], idleMinutes: null },
+    design: 'classic',
+    rememberDesign: true,
     idleTimer: null,
     lastActivity: 0,
     receipt: null,
@@ -35,6 +37,93 @@
   };
 
   var root;
+
+  // ------------------------------------------------------------ screen designs
+  // A design is a layout of the same register: the markup stays the same and the CSS (design-<code> on .pos) rearranges it.
+  // To add one: add it here, add its CSS block, and add a value to the AL enum "POS Screen Design".
+  var DESIGNS = [
+    { code: 'classic', name: 'Classic', desc: 'Item tiles on the left and the sale on the right. A good all-round layout.' },
+    { code: 'touch', name: 'Touch', desc: 'Large tiles, a category rail and big buttons. Made for tablets and touch screens.' },
+    { code: 'scan', name: 'Fast Scan', desc: 'Scanner first: a big sale list with a compact item list. Made for bar code counters.' }
+  ];
+
+  function designByCode(code) {
+    var found = null;
+    DESIGNS.forEach(function (x) { if (x.code === code) { found = x; } });
+    return found;
+  }
+
+  // Small wire-frame of each layout for the picker. Colours follow the active theme.
+  function wire(code) {
+    var line = 'fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="1.2"';
+    var fill = 'fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"';
+    var body = '';
+    var i;
+    if (code === 'touch') {
+      for (i = 0; i < 4; i++) { body += '<rect x="6" y="' + (18 + i * 12) + '" width="16" height="9" rx="4" ' + (i === 0 ? fill : line) + '/>'; }
+      for (i = 0; i < 4; i++) { body += '<rect x="' + (27 + (i % 2) * 30) + '" y="' + (18 + Math.floor(i / 2) * 25) + '" width="27" height="22" rx="3" ' + line + '/>'; }
+      body += '<rect x="91" y="14" width="43" height="56" rx="3" ' + line + '/><rect x="95" y="58" width="35" height="8" rx="3" ' + fill + '/>';
+    } else if (code === 'scan') {
+      body += '<rect x="6" y="14" width="80" height="9" rx="3" ' + fill + '/>';
+      for (i = 0; i < 4; i++) { body += '<rect x="6" y="' + (27 + i * 10) + '" width="80" height="7" rx="2" ' + line + '/>'; }
+      body += '<rect x="6" y="66" width="80" height="4" rx="2" ' + fill + '/>';
+      for (i = 0; i < 5; i++) { body += '<rect x="91" y="' + (14 + i * 11) + '" width="43" height="8" rx="2" ' + line + '/>'; }
+    } else {
+      for (i = 0; i < 6; i++) { body += '<rect x="' + (6 + (i % 3) * 28) + '" y="' + (18 + Math.floor(i / 3) * 26) + '" width="25" height="22" rx="3" ' + line + '/>'; }
+      body += '<rect x="91" y="14" width="43" height="56" rx="3" ' + line + '/><rect x="95" y="58" width="35" height="8" rx="3" ' + fill + '/>';
+    }
+    return '<svg class="wire" viewBox="0 0 140 76" aria-hidden="true"><rect x="1" y="1" width="138" height="74" rx="5" ' + line + '/>' +
+      '<rect x="1" y="1" width="138" height="9" rx="5" fill="currentColor" fill-opacity=".1"/>' + body + '</svg>';
+  }
+
+  function applyDesign(code) {
+    if (!designByCode(code)) { code = 'classic'; }
+    S.design = code;
+    var p = $('.pos');
+    if (!p) { return; }
+    DESIGNS.forEach(function (x) { p.classList.remove('design-' + x.code); });
+    p.classList.add('design-' + code);
+    // the Fast Scan item list is narrow, so its search box gets a shorter hint
+    var scan = $('#scan');
+    if (scan) {
+      scan.placeholder = code === 'scan' ? 'Scan or search   (F2)'
+        : 'Scan a barcode or search items   (F2)   -   tip: 3*barcode adds 3';
+    }
+  }
+
+  // The screen picked last on this device is preselected on the login form. Storage can be blocked, so it is optional.
+  function rememberDesign(code) {
+    S.lastDesign = code;
+    try { localStorage.setItem('pos.design', code); } catch (e) { /* ignore */ }
+  }
+
+  function lastDesign() {
+    if (S.lastDesign !== undefined) { return S.lastDesign; }
+    try { return localStorage.getItem('pos.design') || ''; } catch (e) { return ''; }
+  }
+
+  function renderDesignPicker() {
+    var sel = $('#login-design');
+    if (!sel) { return; }
+    var keep = sel.options.length ? sel.value : lastDesign();   // keep what is chosen right now; the first time use the last choice
+    sel.innerHTML = '<option value="">My default screen</option>' + DESIGNS.map(function (x) {
+      return '<option value="' + x.code + '">' + esc(x.name) + '</option>';
+    }).join('');
+    sel.value = designByCode(keep) ? keep : '';
+    $('#login-design-hint').textContent = designByCode(sel.value) ? designByCode(sel.value).desc : 'The screen set for you, or the standard screen.';
+  }
+
+  function designsModal() {
+    var cards = DESIGNS.map(function (x) {
+      var on = x.code === S.design;
+      return '<button class="design-card' + (on ? ' on' : '') + '" data-act="pick-design" data-code="' + x.code + '">' + wire(x.code) +
+        '<span class="dc-text"><b>' + esc(x.name) + '</b><span>' + esc(x.desc) + '</span></span>' +
+        (on ? '<span class="r-side">Active</span>' : '') + '</button>';
+    }).join('');
+    return '<div class="m-head"><h2>Choose a screen</h2><button class="x" data-act="close-modal">&times;</button></div>' +
+      '<div class="list">' + cards + '</div>' +
+      '<label class="remember"><input type="checkbox" id="design-remember"' + (S.rememberDesign ? ' checked' : '') + '> Use this screen every time I sign in</label>';
+  }
 
   // -------------------------------------------------------------- helpers
   function esc(v) {
@@ -239,6 +328,7 @@
   function start() {
     root = document.getElementById('controlAddIn');
     root.innerHTML = skeleton();
+    applyDesign('classic');
     root.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey, true);
     // Leaving the page removes this frame; give back the page's styles first so Business Central's own layout is untouched.
@@ -269,6 +359,7 @@
       }
     });
 
+    $('#login-design').addEventListener('change', renderDesignPicker);
     var form = $('#login-form');
     form.addEventListener('submit', function (e) { e.preventDefault(); submitLogin(); });
     ['mousedown', 'keydown', 'touchstart', 'wheel'].forEach(function (name) {
@@ -287,7 +378,9 @@
     setLoginError('');
     var terminalNo = term && !term.closest('.login-row').hidden ? term.value : '';
     if (terminalNo) { rememberTerminal(terminalNo); }
-    send('login', { userName: user.value.trim(), password: pass.value, terminalNo: terminalNo });
+    var design = $('#login-design').value;
+    rememberDesign(design);
+    send('login', { userName: user.value.trim(), password: pass.value, terminalNo: terminalNo, design: design });
     pass.value = '';   // the password is never kept in the page after it was sent
   }
 
@@ -345,8 +438,10 @@
       loggedIn: !!se.loggedIn, userName: se.userName || '', isAdmin: !!se.isAdmin,
       hasUsers: se.hasUsers !== false, terminal: se.terminal || null,
       terminals: se.terminals || [],
-      idleMinutes: typeof se.idleMinutes === 'number' ? se.idleMinutes : null
+      idleMinutes: typeof se.idleMinutes === 'number' ? se.idleMinutes : null,
+      design: se.design || ''
     };
+    if (S.session.loggedIn) { applyDesign(S.session.design); }
     if (se.themeCode && se.themeCode !== S.cfg.themeCode) { S.cfg.themeCode = se.themeCode; applyTheme(); }
     if (was && !S.session.loggedIn) { resetForLogout(); }
     renderSession();
@@ -369,7 +464,7 @@
     p.classList.toggle('logged-out', !S.session.loggedIn);
     $('#login').hidden = S.session.loggedIn;
     $('#login-company').textContent = S.cfg.companyName || 'Point of Sale';
-    if (!S.session.loggedIn) { renderTerminalPicker(); }
+    if (!S.session.loggedIn) { renderTerminalPicker(); renderDesignPicker(); }
     $('#logoutBtn').hidden = !S.session.loggedIn;
     renderTopbar();
   }
@@ -464,6 +559,7 @@
       '<div class="who" id="who"></div>' +
       '<div class="top-actions">' +
       '<button class="btn ghost" data-act="toggle-full" id="fullBtn" hidden>Full screen</button>' +
+      '<button class="btn ghost" data-act="open-designs" id="designBtn">Screen</button>' +
       '<button class="btn ghost" data-act="open-themes" id="themeBtn" hidden>Theme</button>' +
       '<button class="btn ghost" data-act="open-held">Held <span class="badge" id="heldBadge">0</span></button>' +
       '<button class="btn ghost" data-act="last-receipt">Last receipt</button>' +
@@ -507,6 +603,11 @@
       '<div class="login-row" hidden>' +
       '<label for="login-terminal">Terminal</label>' +
       '<select id="login-terminal" class="text"></select>' +
+      '</div>' +
+      '<div class="login-row">' +
+      '<label for="login-design">Screen</label>' +
+      '<select id="login-design" class="text"></select>' +
+      '<div class="login-hint" id="login-design-hint"></div>' +
       '</div>' +
       '<div class="caps" id="login-caps" hidden>Caps Lock is on</div>' +
       '<div class="login-error" id="login-error" role="alert" hidden></div>' +
@@ -663,6 +764,7 @@
       case 'receipt': body = receiptModal(m.receipt); break;
       case 'confirm': body = confirmModal(m); break;
       case 'themes': body = themesModal(); break;
+      case 'designs': body = designsModal(); break;
     }
     host.innerHTML = '<div class="overlay" data-act="overlay"><div class="modal modal-' + m.type + '" role="dialog">' + body + '</div></div>';
     if (m.type === 'customers') {
@@ -957,7 +1059,7 @@
     var act = t.getAttribute('data-act');
     var d = t.dataset;
     if (act === 'overlay') {
-      if (e.target === t && S.modal && (S.modal.type === 'customers' || S.modal.type === 'held' || S.modal.type === 'confirm' || S.modal.type === 'themes')) { closeModal(); }
+      if (e.target === t && S.modal && (S.modal.type === 'customers' || S.modal.type === 'held' || S.modal.type === 'confirm' || S.modal.type === 'themes' || S.modal.type === 'designs')) { closeModal(); }
       return;
     }
     if (t.disabled) { return; }
@@ -992,6 +1094,15 @@
         break;
       case 'pick-customer': closeModal(); send('set-customer', { customerNo: d.no }); break;
       case 'open-themes': openModal({ type: 'themes' }); break;
+      case 'open-designs': S.rememberDesign = true; openModal({ type: 'designs' }); break;   // ticked each time, so a choice is only a one-off when the cashier unticks it
+      case 'pick-design': {
+        var rem = $('#design-remember');
+        S.rememberDesign = rem ? rem.checked : S.rememberDesign;
+        applyDesign(d.code);
+        closeModal();
+        send('set-design', { code: d.code, remember: S.rememberDesign });
+        break;
+      }
       case 'pick-theme':
         S.cfg.themeCode = d.code; applyTheme(); closeModal();
         send('set-theme', { code: d.code });

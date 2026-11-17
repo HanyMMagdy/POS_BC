@@ -1,6 +1,6 @@
 page 50228 "My Deliveries"
 {
-    Caption = 'My Deliveries';
+    Caption = 'My Deliveries (Drivers Only)';
     PageType = List;
     SourceTable = "Delivery Order";
     ApplicationArea = All;

@@ -15,6 +15,7 @@ codeunit 50202 "POS Action Handler"
         JsonBuilder: Codeunit "POS Json Builder";
         ThemeMgt: Codeunit "POS Theme Management";
         POSSession: Codeunit "POS Session";
+        ScreenDesignMgt: Codeunit "POS Screen Design Mgt";
         LoginError: Text;
         PayloadObj: JsonObject;
         Response: JsonObject;
@@ -157,6 +158,8 @@ codeunit 50202 "POS Action Handler"
                 HandleReprintLast();
             'set-theme':
                 ThemeMgt.SetUserTheme(CopyStr(GetText('code'), 1, 10));
+            'set-design':
+                HandleSetDesign();
             else
                 Error(UnknownActionErr, RequestAction);
         end;
@@ -180,7 +183,23 @@ codeunit 50202 "POS Action Handler"
             LoginError := EnterCredentialsErr;
             exit(false);
         end;
-        exit(POSSession.TryLogin(UserName, Password, GetText('terminalNo'), LoginError));
+        if not POSSession.TryLogin(UserName, Password, GetText('terminalNo'), LoginError) then
+            exit(false);
+        // The design picked on the login form wins; if none was picked the user's own, then the setup's, then Classic.
+        POSSession.SetDesign(ScreenDesignMgt.Resolve(GetText('design'), POSSession.GetUserName()));
+        exit(true);
+    end;
+
+    /// <summary>The cashier changed the screen with the Screen button. With "remember" it also becomes the user's own default.</summary>
+    local procedure HandleSetDesign()
+    var
+        Design: Enum "POS Screen Design";
+    begin
+        if not ScreenDesignMgt.TryFromCode(GetText('code'), Design) then
+            exit;
+        POSSession.SetDesign(Design);
+        if GetBoolean('remember') then
+            ScreenDesignMgt.SaveForUser(POSSession.GetUserName(), Design);
     end;
 
     /// <summary>Every response carries the session, so the UI always knows whether it is signed in and as whom.</summary>
@@ -203,6 +222,8 @@ codeunit 50202 "POS Action Handler"
         Obj.Add('isAdmin', POSSession.IsAdmin());
         Obj.Add('hasUsers', not POSUser.IsEmpty());
         Obj.Add('themeCode', ThemeMgt.GetUserThemeCode());
+        if POSSession.IsActive() then
+            Obj.Add('design', ScreenDesignMgt.ToCode(POSSession.GetDesign()));
         Obj.Add('idleMinutes', POSSession.GetAutoLogoffMinutes(POSSetup."Auto Sign-out (minutes)"));
         if POSSession.IsActive() then begin
             TerminalObj.Add('no', POSSession.GetTerminalNo());
@@ -368,6 +389,17 @@ codeunit 50202 "POS Action Handler"
                 if not ValueToken.AsValue().IsNull() then
                     exit(ValueToken.AsValue().AsDecimal());
         exit(DefaultValue);
+    end;
+
+    local procedure GetBoolean(KeyName: Text): Boolean
+    var
+        ValueToken: JsonToken;
+    begin
+        if PayloadObj.Get(KeyName, ValueToken) then
+            if ValueToken.IsValue() then
+                if not ValueToken.AsValue().IsNull() then
+                    exit(ValueToken.AsValue().AsBoolean());
+        exit(false);
     end;
 
     local procedure GetInteger(KeyName: Text): Integer

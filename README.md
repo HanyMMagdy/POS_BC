@@ -69,6 +69,22 @@ A store or terminal that receipts refer to cannot be deleted; set it to inactive
 
 In **POS Setup**, group *Receipt Pictures*, choose a **header picture** (for example the logo) and a **footer picture** (for example a promotion) with the actions *Import Header Picture* / *Import Footer Picture* (PNG, JPG, GIF or BMP, up to 500 KB each; *Remove ...* clears them). They are printed at the top and bottom of every receipt, on the receipt preview and on the printout. With no picture chosen nothing changes. The register receives the pictures once, when it opens, so a changed picture shows after the register is reopened.
 
+## Screen designs
+
+The register comes in three layouts. It is the same screen with the same data and actions; only the arrangement changes.
+
+| Design | For | What it looks like |
+|---|---|---|
+| **Classic** | all-round | item tiles on the left, the sale on the right |
+| **Touch** | tablets and touch screens | category rail, large tiles, big quantity and pay buttons |
+| **Fast Scan** | bar code counters | wide sale list on the left, compact item list on the right, big scan box and total |
+
+- **At login** the form has a *Screen* list: *My default screen* or one of the three. The choice applies to that session.
+- **During the sale** the *Screen* button in the top bar opens a picker with a small drawing of each layout. *Use this screen every time I sign in* (ticked by default) saves it on the POS user.
+- **Which one is used:** the one picked on the login form, else *Screen Design* on the POS user, else *Default Screen Design* in POS Setup, else Classic.
+- Setup: *POS Setup* > *Default Screen Design*; *POS Users* > *Screen Design* (blank = follow POS Setup).
+- Adding a design: add it to `DESIGNS` in `pos.js`, add a `.design-<code>` block in `pos.css`, add a value to the enum `POS Screen Design` (50205), and map it in codeunit `POS Screen Design Mgt` (50212). The preview accepts `?setupdesign=scan`.
+
 ## Login and users
 
 The register opens on a **login screen**. Nothing of the sale is loaded until a user signs in.
