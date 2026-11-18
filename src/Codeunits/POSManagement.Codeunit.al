@@ -11,6 +11,11 @@ codeunit 50200 "POS Management"
         DiscountNotAllowedErr: Label 'Discounts are disabled in POS Setup.';
         DiscountTooHighErr: Label 'The maximum line discount is %1%.', Comment = '%1 = percentage';
         CustomerBlockedErr: Label 'Customer %1 is blocked and cannot be used for a sale.', Comment = '%1 = customer no.';
+        NotDeliveryStoreErr: Label 'Delivery clients and drivers can only be chosen in a store of type Delivery.';
+        ClientBlockedErr: Label 'Delivery client %1 is blocked.', Comment = '%1 = client no.';
+        DriverBlockedErr: Label 'Driver %1 is blocked.', Comment = '%1 = driver no.';
+        DriverOffDutyErr: Label 'Driver %1 is off duty.', Comment = '%1 = driver no.';
+        DriverStoreErr: Label 'Driver %1 works for store %2 and cannot deliver for this store.', Comment = '%1 = driver no., %2 = driver store';
         NotYourReceiptErr: Label 'Receipt %1 was put on hold by another cashier. Only an administrator can recall it.', Comment = '%1 = receipt no.';
         NotOnHoldErr: Label 'Receipt %1 is not on hold.', Comment = '%1 = receipt no.';
         OtherStoreErr: Label 'Receipt %1 was put on hold in store %2 and cannot be recalled in this store.', Comment = '%1 = receipt no., %2 = store no.';
@@ -320,6 +325,62 @@ codeunit 50200 "POS Management"
                 end;
             until Line.Next() = 0;
         RecalculateReceipt(Header);
+    end;
+
+    /// <summary>
+    /// Delivery stores sell to a delivery client instead of a customer. The client's linked customer (if it has one) becomes the
+    /// receipt customer, because the sales invoice needs a real customer; the client itself is kept on the receipt for the delivery order.
+    /// </summary>
+    procedure SetDeliveryClient(var Header: Record "POS Receipt Header"; ClientNo: Code[20])
+    var
+        Client: Record "Delivery Client";
+    begin
+        if not POSSession.IsDeliveryStore() then
+            Error(NotDeliveryStoreErr);
+
+        if ClientNo = '' then begin
+            Header."Delivery Client No." := '';
+            Header."Delivery Client Name" := '';
+            Header.Modify();
+            exit;
+        end;
+
+        Client.Get(ClientNo);
+        if Client.Blocked then
+            Error(ClientBlockedErr, ClientNo);
+
+        Header."Delivery Client No." := Client."No.";
+        Header."Delivery Client Name" := Client.Name;
+        Header.Modify();
+        if Client."Customer No." <> '' then
+            SetCustomer(Header, Client."Customer No.");
+    end;
+
+    procedure SetDeliveryDriver(var Header: Record "POS Receipt Header"; DriverNo: Code[20])
+    var
+        Driver: Record "Delivery Driver";
+    begin
+        if not POSSession.IsDeliveryStore() then
+            Error(NotDeliveryStoreErr);
+
+        if DriverNo = '' then begin
+            Header."Delivery Driver No." := '';
+            Header."Delivery Driver Name" := '';
+            Header.Modify();
+            exit;
+        end;
+
+        Driver.Get(DriverNo);
+        if Driver.Blocked then
+            Error(DriverBlockedErr, DriverNo);
+        if Driver.Status = Driver.Status::"Off Duty" then
+            Error(DriverOffDutyErr, DriverNo);
+        if (Driver."Store No." <> '') and (Driver."Store No." <> Header."Store No.") then
+            Error(DriverStoreErr, DriverNo, Driver."Store No.");
+
+        Header."Delivery Driver No." := Driver."No.";
+        Header."Delivery Driver Name" := Driver.Name;
+        Header.Modify();
     end;
 
     local procedure CalcLine(var Line: Record "POS Receipt Line")

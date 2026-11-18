@@ -44,12 +44,18 @@ codeunit 50207 "Delivery Management"
         Order."Posted Sales Invoice No." := Receipt."Posted Sales Invoice No.";
         Order."Store No." := Receipt."Store No.";
         Order."Order Amount" := Receipt."Total Amount";
-        Order."Customer No." := Receipt."Customer No.";
+        // A delivery store receipt carries the delivery client chosen on the register; any other receipt keeps the old behaviour.
+        if Receipt."Delivery Client No." <> '' then
+            Order."Customer No." := Receipt."Delivery Client No."
+        else
+            Order."Customer No." := Receipt."Customer No.";
         Order.Insert(true);
         Order.FillFromCustomer();
+        FillZoneFromClient(Order);
         SetPaymentFromInvoice(Order);
         Order.Modify(true);
         Log(Order, StrSubstNo(CreatedFromReceiptTxt, Receipt."No."));
+        AssignChosenDriver(Order, Receipt."Delivery Driver No.");
         exit(Order."No.");
     end;
 
@@ -92,6 +98,35 @@ codeunit 50207 "Delivery Management"
         Order.Modify(true);
         Log(Order, StrSubstNo(CreatedFromInvoiceTxt, InvoiceNo));
         exit(Order."No.");
+    end;
+
+    local procedure FillZoneFromClient(var Order: Record "Delivery Order")
+    var
+        Client: Record "Delivery Client";
+    begin
+        if not Client.Get(Order."Customer No.") then
+            exit;
+        if Client."Delivery Zone Code" <> '' then
+            Order.Validate("Zone Code", Client."Delivery Zone Code");
+    end;
+
+    /// <summary>
+    /// The driver chosen at the register is assigned to the new order. If that driver cannot take it any more
+    /// (blocked, off duty, another store), the order is simply left unassigned for the dispatcher.
+    /// </summary>
+    local procedure AssignChosenDriver(var Order: Record "Delivery Order"; DriverNo: Code[20])
+    var
+        Driver: Record "Delivery Driver";
+    begin
+        if DriverNo = '' then
+            exit;
+        if not Driver.Get(DriverNo) then
+            exit;
+        if Driver.Blocked or (Driver.Status = Driver.Status::"Off Duty") then
+            exit;
+        if (Driver."Store No." <> '') and (Order."Store No." <> '') and (Driver."Store No." <> Order."Store No.") then
+            exit;
+        AssignDriver(Order, DriverNo);
     end;
 
     local procedure CheckNoActiveOrder(ReceiptNo: Code[20]; InvoiceNo: Code[20])

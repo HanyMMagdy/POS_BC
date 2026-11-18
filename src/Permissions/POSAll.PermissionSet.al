@@ -56,5 +56,14 @@ permissionset 50200 "POS - ALL"
         page "POS Register Part" = X,
         page "POS Cashier Role Center" = X,
         page "POS Terminal List" = X,
-        page "POS Store List" = X;
+        page "POS Store List" = X,
+        report "POS Receipt" = X,
+        report "POS Daily Sales Summary" = X,
+        report "POS Payment Method Summary" = X,
+        report "POS Cashier Sales" = X,
+        report "POS Item Sales" = X,
+        report "POS Discount Report" = X,
+        report "POS Voided Receipts" = X,
+        report "POS Sales by Store" = X,
+        report "POS Sales by Terminal" = X;
 }

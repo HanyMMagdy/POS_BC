@@ -195,5 +195,44 @@ page 50227 "Delivery Role Center"
                 }
             }
         }
+
+        area(Reporting)
+        {
+            group(DeliveryReports)
+            {
+                Caption = 'Delivery reports';
+                Image = Report;
+                action(RptDeliveryOrder)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Delivery Order';
+                    RunObject = report "Delivery Order";
+                }
+                action(RptRunSheet)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Delivery Run Sheet';
+                    RunObject = report "Delivery Run Sheet";
+                }
+                action(RptStatusSummary)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Delivery Status Summary';
+                    RunObject = report "Delivery Status Summary";
+                }
+                action(RptCODCollection)
+                {
+                    ApplicationArea = All;
+                    Caption = 'COD Collection Report';
+                    RunObject = report "COD Collection Report";
+                }
+                action(RptDriverCash)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Driver Cash Reconciliation';
+                    RunObject = report "Driver Cash Reconciliation";
+                }
+            }
+        }
     }
 }

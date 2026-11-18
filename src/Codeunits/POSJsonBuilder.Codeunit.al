@@ -134,6 +134,11 @@ codeunit 50201 "POS Json Builder"
         else
             Obj.Add('time', Format(Header."Created At", 0, '<Hours24,2>:<Minutes,2>'));
         Obj.Add('invoiceNo', Header."Posted Sales Invoice No.");
+        Obj.Add('deliveryClientNo', Header."Delivery Client No.");
+        Obj.Add('deliveryClientName', Header."Delivery Client Name");
+        Obj.Add('deliveryDriverNo', Header."Delivery Driver No.");
+        Obj.Add('deliveryDriverName', Header."Delivery Driver Name");
+        Obj.Add('deliveryOrderNo', FindDeliveryOrderNo(Header));
 
         Line.SetRange("Receipt No.", Header."No.");
         if Line.FindSet() then
@@ -265,6 +270,100 @@ codeunit 50201 "POS Json Builder"
     local procedure CollectItems(var Item: Record Item; var ItemNos: List of [Code[20]]; SearchMode: Text; CategoryCode: Code[20]; Limit: Integer)
     begin
         CollectItems(Item, ItemNos, SearchMode, CategoryCode, Limit, '');
+    end;
+
+    procedure FindDeliveryOrderNo(Header: Record "POS Receipt Header"): Code[20]
+    var
+        Order: Record "Delivery Order";
+    begin
+        if (Header."Delivery Client No." = '') or (Header.Status <> Header.Status::Posted) then
+            exit('');
+        Order.SetCurrentKey("Receipt No.");
+        Order.SetRange("Receipt No.", Header."No.");
+        Order.SetFilter(Status, '<>%1', Order.Status::Cancelled);
+        if Order.FindFirst() then
+            exit(Order."No.");
+        exit('');
+    end;
+
+    /// <summary>The delivery clients a delivery-store cashier can choose from. Searches by name, number and phone.</summary>
+    procedure BuildDeliveryClients(SearchText: Text): JsonArray
+    var
+        Client: Record "Delivery Client";
+        Result: JsonArray;
+        ClientObj: JsonObject;
+        Seen: List of [Code[20]];
+        Pass: Integer;
+        PhoneText: Text;
+        AddressText: Text;
+    begin
+        SearchText := SanitizeFilterText(SearchText);
+        for Pass := 1 to 3 do begin
+            // Pass 1 searches by name, pass 2 by client no., pass 3 by phone. With no search text one pass lists the first clients.
+            if (SearchText = '') and (Pass > 1) then
+                break;
+
+            Client.Reset();
+            Client.SetRange(Blocked, false);
+            if SearchText <> '' then
+                case Pass of
+                    1:
+                        Client.SetFilter(Name, '@*' + SearchText + '*');
+                    2:
+                        Client.SetFilter("No.", '@' + SearchText + '*');
+                    3:
+                        Client.SetFilter("Phone No.", '*' + SearchText + '*');
+                end;
+
+            if Client.FindSet() then
+                repeat
+                    if Seen.Count() >= 30 then
+                        break;
+                    if not Seen.Contains(Client."No.") then begin
+                        Seen.Add(Client."No.");
+                        PhoneText := Client."Phone No.";
+                        if PhoneText = '' then
+                            PhoneText := Client."Mobile Phone No.";
+                        AddressText := Client.Address;
+                        if Client.City <> '' then begin
+                            if AddressText <> '' then
+                                AddressText += ', ';
+                            AddressText += Client.City;
+                        end;
+                        Clear(ClientObj);
+                        ClientObj.Add('no', Client."No.");
+                        ClientObj.Add('name', Client.Name);
+                        ClientObj.Add('phone', PhoneText);
+                        ClientObj.Add('address', AddressText);
+                        ClientObj.Add('zone', Client."Delivery Zone Code");
+                        Result.Add(ClientObj);
+                    end;
+                until Client.Next() = 0;
+        end;
+        exit(Result);
+    end;
+
+    /// <summary>The drivers who can take a delivery of the signed-in store: not blocked, not off duty, and working for this store or for all.</summary>
+    procedure BuildDeliveryDrivers(): JsonArray
+    var
+        Driver: Record "Delivery Driver";
+        Result: JsonArray;
+        DriverObj: JsonObject;
+    begin
+        Driver.SetRange(Blocked, false);
+        Driver.SetFilter(Status, '<>%1', Driver.Status::"Off Duty");
+        Driver.SetFilter("Store No.", '%1|%2', POSSession.GetStoreNo(), '');
+        if Driver.FindSet() then
+            repeat
+                Clear(DriverObj);
+                DriverObj.Add('no', Driver."No.");
+                DriverObj.Add('name', Driver.Name);
+                DriverObj.Add('phone', Driver."Phone No.");
+                DriverObj.Add('vehicle', Driver.Vehicle);
+                DriverObj.Add('status', Format(Driver.Status));
+                Result.Add(DriverObj);
+            until Driver.Next() = 0;
+        exit(Result);
     end;
 
     procedure BuildCustomers(SearchText: Text): JsonArray

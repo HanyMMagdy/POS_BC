@@ -298,6 +298,41 @@ page 50209 "POS Role Center"
                     Caption = 'POS Cashier Sales';
                     RunObject = report "POS Cashier Sales";
                 }
+                action(POSItemSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Item Sales';
+                    RunObject = report "POS Item Sales";
+                }
+                action(POSDiscountReport)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Discount Report';
+                    RunObject = report "POS Discount Report";
+                }
+                action(POSVoidedReceipts)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Voided Receipts';
+                    RunObject = report "POS Voided Receipts";
+                }
+            }
+            group(POSManagementReports)
+            {
+                Caption = 'Management reports';
+                Image = Report;
+                action(POSSalesByStore)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Sales by Store';
+                    RunObject = report "POS Sales by Store";
+                }
+                action(POSSalesByTerminal)
+                {
+                    ApplicationArea = All;
+                    Caption = 'POS Sales by Terminal';
+                    RunObject = report "POS Sales by Terminal";
+                }
             }
         }
     }

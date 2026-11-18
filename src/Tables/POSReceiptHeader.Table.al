@@ -142,6 +142,30 @@ table 50202 "POS Receipt Header"
         {
             Editable = false;
         }
+        field(13; "Delivery Client No."; Code[20])
+        {
+            Caption = 'Delivery Client No.';
+            Editable = false;
+            TableRelation = "Delivery Client";
+            ToolTip = 'The delivery client chosen on the register of a delivery store. It replaces the customer on delivery sales.';
+        }
+        field(14; "Delivery Client Name"; Text[100])
+        {
+            Caption = 'Delivery Client Name';
+            Editable = false;
+        }
+        field(15; "Delivery Driver No."; Code[20])
+        {
+            Caption = 'Delivery Driver No.';
+            Editable = false;
+            TableRelation = "Delivery Driver";
+            ToolTip = 'The driver chosen on the register of a delivery store.';
+        }
+        field(16; "Delivery Driver Name"; Text[100])
+        {
+            Caption = 'Delivery Driver Name';
+            Editable = false;
+        }
 
     }
 

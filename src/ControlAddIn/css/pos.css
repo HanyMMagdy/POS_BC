@@ -136,6 +136,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 3px 5px; border-r
   border-radius: var(--radius) var(--radius) 0 0;
 }
 .customer:hover { background: var(--hover); }
+.customer[hidden] { display: none; }
 .c-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
 .c-name { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-go { color: var(--accent); font-weight: 600; font-size: 13px; }
@@ -174,7 +175,7 @@ kbd { font: 11px/1 ui-monospace, Consolas, monospace; padding: 3px 5px; border-r
 .modal { width: min(440px, 100%); max-height: 100%; overflow: auto; background: var(--surface); border-radius: 14px; padding: 18px 20px 20px; box-shadow: 0 20px 50px rgba(16, 24, 40, .28); display: flex; flex-direction: column; gap: 12px; }
 .modal-payment { width: min(780px, 100%); }
 .modal-receipt { width: min(400px, 100%); }
-.modal-customers, .modal-held { width: min(520px, 100%); }
+.modal-customers, .modal-clients, .modal-drivers, .modal-held { width: min(520px, 100%); }
 .m-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .m-head h2 { margin: 0; font-size: 18px; }
 .x { width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; font-size: 24px; line-height: 1; color: var(--muted); }

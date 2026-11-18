@@ -29,6 +29,7 @@ codeunit 50202 "POS Action Handler"
         NoLastReceiptErr: Label 'There is no previous receipt for this cashier.';
         NoExactMatchMsg: Label 'No item matches "%1". Showing similar items.', Comment = '%1 = scanned text';
         SaleCompletedMsg: Label 'Sale %1 completed. Invoice %2 posted.', Comment = '%1 = receipt no., %2 = posted sales invoice no.';
+        DeliverySaleCompletedMsg: Label 'Sale %1 completed. Invoice %2 posted. Delivery order %3 created.', Comment = '%1 = receipt no., %2 = posted sales invoice no., %3 = delivery order no.';
         HeldMsg: Label 'Receipt %1 is on hold.', Comment = '%1 = receipt no.';
         RecalledMsg: Label 'Receipt %1 recalled.', Comment = '%1 = receipt no.';
         TakenOverMsg: Label 'Receipt %1 taken over from %2.', Comment = '%1 = receipt no., %2 = cashier who held it';
@@ -127,6 +128,14 @@ codeunit 50202 "POS Action Handler"
                 Response.Add('customers', JsonBuilder.BuildCustomers(GetText('text')));
             'set-customer':
                 POSMgt.SetCustomer(Header, CopyStr(GetText('customerNo'), 1, 20));
+            'search-clients':
+                Response.Add('clients', JsonBuilder.BuildDeliveryClients(GetText('text')));
+            'set-client':
+                POSMgt.SetDeliveryClient(Header, CopyStr(GetText('clientNo'), 1, 20));
+            'list-drivers':
+                Response.Add('drivers', JsonBuilder.BuildDeliveryDrivers());
+            'set-driver':
+                POSMgt.SetDeliveryDriver(Header, CopyStr(GetText('driverNo'), 1, 20));
             'hold':
                 begin
                     POSMgt.HoldReceipt(Header);
@@ -230,6 +239,7 @@ codeunit 50202 "POS Action Handler"
             TerminalObj.Add('description', POSSession.GetTerminalDescription());
             TerminalObj.Add('storeNo', POSSession.GetStoreNo());
             TerminalObj.Add('storeName', POSSession.GetStoreName());
+            TerminalObj.Add('delivery', POSSession.IsDeliveryStore());
             Obj.Add('terminal', TerminalObj);
         end else
             Obj.Add('terminals', JsonBuilder.BuildTerminals());
@@ -279,6 +289,7 @@ codeunit 50202 "POS Action Handler"
         PaymentObj: JsonObject;
         ValueToken: JsonToken;
         MethodCode: Code[10];
+        DeliveryOrderNo: Code[20];
         Amount: Decimal;
     begin
         if not POSMgt.HasLines(Header) then
@@ -302,7 +313,11 @@ codeunit 50202 "POS Action Handler"
 
         Header.Get(Header."No.");
         Response.Add('receiptDone', JsonBuilder.ReceiptToJson(Header));
-        AddMessage('success', StrSubstNo(SaleCompletedMsg, Header."No.", Header."Posted Sales Invoice No."));
+        DeliveryOrderNo := JsonBuilder.FindDeliveryOrderNo(Header);
+        if DeliveryOrderNo <> '' then
+            AddMessage('success', StrSubstNo(DeliverySaleCompletedMsg, Header."No.", Header."Posted Sales Invoice No.", DeliveryOrderNo))
+        else
+            AddMessage('success', StrSubstNo(SaleCompletedMsg, Header."No.", Header."Posted Sales Invoice No."));
     end;
 
     local procedure HandleRecall()

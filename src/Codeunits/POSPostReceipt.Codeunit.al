@@ -2,7 +2,8 @@
 /// Posts a POS receipt in one transaction:
 ///   1. creates a sales invoice for the receipt customer and posts it (inventory, G/L, VAT, customer ledger),
 ///   2. posts one customer payment per tender, applied to that invoice, against the cash / bank account of the payment method,
-///   3. marks the receipt as posted.
+///   3. marks the receipt as posted,
+///   4. for a delivery store, creates the delivery order with the chosen client and driver.
 /// Any error rolls everything back, so the receipt is either fully posted or untouched.
 /// </summary>
 codeunit 50203 "POS Post Receipt"
@@ -19,12 +20,16 @@ codeunit 50203 "POS Post Receipt"
     end;
 
     var
+        POSSession: Codeunit "POS Session";
+        DeliveryMgt: Codeunit "Delivery Management";
         NotOpenErr: Label 'Receipt %1 is %2 and cannot be posted.', Comment = '%1 = receipt no., %2 = status';
         NoLinesErr: Label 'Receipt %1 has no lines.', Comment = '%1 = receipt no.';
         NoPaymentsErr: Label 'There are no payments on receipt %1.', Comment = '%1 = receipt no.';
         NonCashTooHighErr: Label 'Card and other non-cash payments (%1) cannot be more than the amount due (%2). Only cash can give change.', Comment = '%1 = non-cash total, %2 = total due';
         NotEnoughErr: Label 'The payments (%1) do not cover the amount due (%2).', Comment = '%1 = tendered, %2 = due';
         InvoiceTotalDiffersErr: Label 'The posted invoice total is %1 but the receipt total is %2. Nothing was posted; check the VAT setup of the customer and items.', Comment = '%1 = invoice total, %2 = receipt total';
+        DeliveryClientRequiredErr: Label 'Choose the delivery client before completing a sale in a delivery store.';
+        DeliveryDriverRequiredErr: Label 'Choose the delivery driver before completing a sale in a delivery store.';
         InvoiceNotFoundErr: Label 'The posted sales invoice for receipt %1 could not be found.', Comment = '%1 = receipt no.';
 
     procedure PostReceipt(var Header: Record "POS Receipt Header")
@@ -43,9 +48,19 @@ codeunit 50203 "POS Post Receipt"
 
         Header.Status := Header.Status::Posted;
         Header."On Hold" := false;
+        // A sale of a delivery store is waiting for its delivery order; the delivery module picks receipts up by this status.
+        if POSSession.StoreIsDelivery(Header."Store No.") then
+            Header."Delivery Status" := Header."Delivery Status"::New;
         Header."Posted Sales Invoice No." := PostedInvoiceNo;
         Header."Posted At" := CurrentDateTime();
         Header.Modify();
+
+        // Every sale of a delivery store becomes a delivery order, in the same transaction: if the order cannot be
+        // created (for example the delivery number series is missing) the sale is rolled back too, so no paid sale is left without its delivery.
+        if POSSession.StoreIsDelivery(Header."Store No.") then begin
+            DeliveryMgt.CreateFromReceipt(Header);
+            Header.Get(Header."No.");
+        end;
     end;
 
     local procedure CheckReceipt(Header: Record "POS Receipt Header")
@@ -57,6 +72,13 @@ codeunit 50203 "POS Post Receipt"
     begin
         if Header.Status <> Header.Status::Open then
             Error(NotOpenErr, Header."No.", Header.Status);
+
+        if POSSession.StoreIsDelivery(Header."Store No.") then begin
+            if Header."Delivery Client No." = '' then
+                Error(DeliveryClientRequiredErr);
+            if Header."Delivery Driver No." = '' then
+                Error(DeliveryDriverRequiredErr);
+        end;
 
         Line.SetRange("Receipt No.", Header."No.");
         if Line.IsEmpty() then

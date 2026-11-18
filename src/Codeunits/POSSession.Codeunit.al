@@ -210,6 +210,23 @@ codeunit 50206 "POS Session"
         exit(CurrentStoreName);
     end;
 
+    /// <summary>True when the terminal the cashier signed in to belongs to a store of type Delivery.</summary>
+    procedure IsDeliveryStore(): Boolean
+    begin
+        exit(StoreIsDelivery(CurrentStoreNo));
+    end;
+
+    procedure StoreIsDelivery(StoreNo: Code[20]): Boolean
+    var
+        Store: Record "POS Store";
+    begin
+        if StoreNo = '' then
+            exit(false);
+        if not Store.Get(StoreNo) then
+            exit(false);
+        exit(Store."Store Type" = Store."Store Type"::DeLivery);
+    end;
+
     /// <summary>The stock location of the terminal (or its store). Falls back to the given default, normally POS Setup.</summary>
     procedure GetLocationCode(DefaultLocationCode: Code[10]): Code[10]
     begin

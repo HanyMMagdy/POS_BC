@@ -41,5 +41,10 @@ permissionset 50201 "POS - DELIVERY"
         page "Delivery Complete Dialog" = X,
         page "Delivery Client Card" = X,
         page "Delivery Client List" = X,
-        page "Delivery Fail Dialog" = X;
+        page "Delivery Fail Dialog" = X,
+        report "Delivery Order" = X,
+        report "Delivery Run Sheet" = X,
+        report "Delivery Status Summary" = X,
+        report "COD Collection Report" = X,
+        report "Driver Cash Reconciliation" = X;
 }

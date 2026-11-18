@@ -23,6 +23,8 @@
     receipt: null,
     products: [],
     customers: [],
+    clients: [],
+    drivers: [],
     held: [],
     heldCount: 0,
     category: '',
@@ -425,7 +427,7 @@
   }
 
   function resetForLogout() {
-    S.receipt = null; S.products = []; S.customers = []; S.held = []; S.heldCount = 0;
+    S.receipt = null; S.products = []; S.customers = []; S.clients = []; S.drivers = []; S.held = []; S.heldCount = 0;
     S.category = ''; S.modal = null; S.pay = null; S.prevQty = {}; S.queue = [];
     var host = $('#modal-host'); if (host) { host.innerHTML = ''; }
     var scan = $('#scan'); if (scan) { scan.value = ''; }
@@ -514,6 +516,8 @@
     }
     if (r.products) { S.products = r.products; renderProducts(); }
     if (r.customers) { S.customers = r.customers; renderCustomerList(); }
+    if (r.clients) { S.clients = r.clients; renderClientList(); }
+    if (r.drivers) { S.drivers = r.drivers; renderDriverList(); }
     if (r.held) { S.held = r.held; }
     if (typeof r.heldCount === 'number') { S.heldCount = r.heldCount; renderTopbar(); }
 
@@ -579,6 +583,7 @@
       '</section>' +
       '<aside class="ticket">' +
       '<button class="customer" data-act="open-customers" id="customerBtn"></button>' +
+      '<button class="customer" data-act="open-drivers" id="driverBtn" hidden></button>' +
       '<div class="lines" id="lines"></div>' +
       '<div class="totals" id="totals"></div>' +
       '<div class="ticket-actions">' +
@@ -681,15 +686,30 @@
     }).join('');
   }
 
+  function isDeliveryStore() {
+    return !!(S.session && S.session.terminal && S.session.terminal.delivery);
+  }
+
   function renderTicket() {
     if (!root) { return; }
     var r = S.receipt;
     renderTopbar();
 
+    // A delivery store sells to a delivery client and sends a driver, so the customer button turns into those two pickers.
+    var delivery = isDeliveryStore();
     var cust = $('#customerBtn');
-    cust.innerHTML = r
-      ? '<span class="c-label">Customer</span><span class="c-name">' + esc(r.customerName || r.customerNo || 'Select customer') + '</span><span class="c-go">Change</span>'
-      : '<span class="c-name">Loading...</span>';
+    var drv = $('#driverBtn');
+    cust.innerHTML = !r
+      ? '<span class="c-name">Loading...</span>'
+      : delivery
+        ? '<span class="c-label">Client</span><span class="c-name">' + esc(r.deliveryClientName || 'Select delivery client') + '</span><span class="c-go">' + (r.deliveryClientNo ? 'Change' : 'Choose') + '</span>'
+        : '<span class="c-label">Customer</span><span class="c-name">' + esc(r.customerName || r.customerNo || 'Select customer') + '</span><span class="c-go">Change</span>';
+    drv.hidden = !delivery;
+    if (delivery) {
+      drv.innerHTML = r
+        ? '<span class="c-label">Driver</span><span class="c-name">' + esc(r.deliveryDriverName || 'Select driver') + '</span><span class="c-go">' + (r.deliveryDriverNo ? 'Change' : 'Choose') + '</span>'
+        : '';
+    }
 
     var linesEl = $('#lines');
     var lines = r ? r.lines : [];
@@ -733,7 +753,9 @@
 
     var hasLines = lines.length > 0;
     var pay = $('#payBtn');
-    pay.disabled = !hasLines;
+    var needsDelivery = delivery && !!r && !(r.deliveryClientNo && r.deliveryDriverNo);
+    pay.disabled = !hasLines || needsDelivery;
+    pay.title = hasLines && needsDelivery ? 'Choose the delivery client and the driver first.' : '';
     pay.innerHTML = 'Pay ' + (hasLines ? money(r.total) : '') + ' <kbd>F4</kbd>';
     $('[data-act="hold"]').disabled = !hasLines;
   }
@@ -760,6 +782,8 @@
       case 'keypad': body = keypadModal(m); break;
       case 'payment': body = paymentModal(); break;
       case 'customers': body = customersModal(); break;
+      case 'clients': body = clientsModal(); break;
+      case 'drivers': body = driversModal(); break;
       case 'held': body = heldModal(); break;
       case 'receipt': body = receiptModal(m.receipt); break;
       case 'confirm': body = confirmModal(m); break;
@@ -772,6 +796,12 @@
       if (q) { q.focus(); }
       renderCustomerList();
     }
+    if (m.type === 'clients') {
+      var cq = $('#client-q');
+      if (cq) { cq.focus(); }
+      renderClientList();
+    }
+    if (m.type === 'drivers') { renderDriverList(); }
     if (m.type === 'payment') { renderPaymentState(); }
   }
 
@@ -830,6 +860,41 @@
       return '<button class="row" data-act="pick-customer" data-no="' + esc(c.no) + '">' +
         '<span class="r-main"><b>' + esc(c.name) + '</b><small>' + esc(c.no) + (c.city ? ' - ' + esc(c.city) : '') + '</small></span>' +
         '<span class="r-side">' + esc(c.phone) + '</span></button>';
+    }).join('');
+  }
+
+  // ---- delivery clients and drivers (delivery stores)
+  function clientsModal() {
+    return '<div class="m-head"><h2>Select delivery client</h2><button class="x" data-act="close-modal">&times;</button></div>' +
+      '<input id="client-q" class="text" type="text" placeholder="Search by name, number or phone" autocomplete="off">' +
+      '<div class="list" id="client-list"></div>';
+  }
+
+  function renderClientList() {
+    var el = $('#client-list');
+    if (!el || !S.modal || S.modal.type !== 'clients') { return; }
+    if (!S.clients.length) { el.innerHTML = '<div class="empty">No delivery clients found.</div>'; return; }
+    el.innerHTML = S.clients.map(function (c) {
+      return '<button class="row" data-act="pick-client" data-no="' + esc(c.no) + '">' +
+        '<span class="r-main"><b>' + esc(c.name) + '</b><small>' + esc(c.no) + (c.address ? ' - ' + esc(c.address) : '') + '</small></span>' +
+        '<span class="r-side">' + esc(c.phone) + '</span></button>';
+    }).join('');
+  }
+
+  function driversModal() {
+    return '<div class="m-head"><h2>Select driver</h2><button class="x" data-act="close-modal">&times;</button></div>' +
+      '<div class="list" id="driver-list"><div class="empty">Loading drivers...</div></div>';
+  }
+
+  function renderDriverList() {
+    var el = $('#driver-list');
+    if (!el || !S.modal || S.modal.type !== 'drivers') { return; }
+    if (!S.drivers.length) { el.innerHTML = '<div class="empty">No driver is available for this store.</div>'; return; }
+    el.innerHTML = S.drivers.map(function (d) {
+      var sub = [d.vehicle, d.phone].filter(Boolean).join(' - ');
+      return '<button class="row" data-act="pick-driver" data-no="' + esc(d.no) + '">' +
+        '<span class="r-main"><b>' + esc(d.name) + '</b><small>' + esc(d.no) + (sub ? ' - ' + esc(sub) : '') + '</small></span>' +
+        '<span class="r-side">' + esc(d.status) + '</span></button>';
     }).join('');
   }
 
@@ -985,7 +1050,11 @@
       '<div class="r-center">Receipt ' + esc(r.no) + '</div>' +
       '<div class="r-center">' + esc(r.date) + ' ' + esc(r.time) + '</div>' +
       '<div class="r-center">Cashier: ' + esc(r.cashier) + (r.terminal ? '   Terminal: ' + esc(r.terminal) : '') + '</div>' +
-      (r.customerName ? '<div class="r-center">' + esc(r.customerName) + '</div>' : '') +
+      (r.deliveryClientName
+        ? '<div class="r-center">Deliver to: ' + esc(r.deliveryClientName) + '</div>' +
+          (r.deliveryDriverName ? '<div class="r-center small">Driver: ' + esc(r.deliveryDriverName) + '</div>' : '') +
+          (r.deliveryOrderNo ? '<div class="r-center small">Delivery order: ' + esc(r.deliveryOrderNo) + '</div>' : '')
+        : (r.customerName ? '<div class="r-center">' + esc(r.customerName) + '</div>' : '')) +
       '<hr>' + lines + '<hr>' +
       '<div class="r-row"><span>Subtotal</span><span>' + money(r.subtotal) + '</span></div>' +
       (r.discount ? '<div class="r-row"><span>Discounts included</span><span>' + money(r.discount) + '</span></div>' : '') +
@@ -1059,7 +1128,7 @@
     var act = t.getAttribute('data-act');
     var d = t.dataset;
     if (act === 'overlay') {
-      if (e.target === t && S.modal && (S.modal.type === 'customers' || S.modal.type === 'held' || S.modal.type === 'confirm' || S.modal.type === 'themes' || S.modal.type === 'designs')) { closeModal(); }
+      if (e.target === t && S.modal && (S.modal.type === 'customers' || S.modal.type === 'clients' || S.modal.type === 'drivers' || S.modal.type === 'held' || S.modal.type === 'confirm' || S.modal.type === 'themes' || S.modal.type === 'designs')) { closeModal(); }
       return;
     }
     if (t.disabled) { return; }
@@ -1088,11 +1157,24 @@
       }
       case 'line-remove': send('remove-line', { lineNo: Number(d.line) }); break;
       case 'open-customers':
-        openModal({ type: 'customers' });
-        S.customers = [];
-        send('search-customers', { text: '' });
+        if (isDeliveryStore()) {
+          openModal({ type: 'clients' });
+          S.clients = [];
+          send('search-clients', { text: '' });
+        } else {
+          openModal({ type: 'customers' });
+          S.customers = [];
+          send('search-customers', { text: '' });
+        }
         break;
       case 'pick-customer': closeModal(); send('set-customer', { customerNo: d.no }); break;
+      case 'pick-client': closeModal(); send('set-client', { clientNo: d.no }); break;
+      case 'open-drivers':
+        openModal({ type: 'drivers' });
+        S.drivers = [];
+        send('list-drivers', {});
+        break;
+      case 'pick-driver': closeModal(); send('set-driver', { driverNo: d.no }); break;
       case 'open-themes': openModal({ type: 'themes' }); break;
       case 'open-designs': S.rememberDesign = true; openModal({ type: 'designs' }); break;   // ticked each time, so a choice is only a one-off when the cashier unticks it
       case 'pick-design': {
@@ -1190,7 +1272,7 @@
     }
 
     if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
-    if (m.type === 'customers') { return; }
+    if (m.type === 'customers' || m.type === 'clients') { return; }
 
     if (m.type === 'keypad' || m.type === 'payment') {
       if (/^[0-9]$/.test(e.key) || e.key === '.' || e.key === ',') { e.preventDefault(); keypadKey(e.key === ',' ? '.' : e.key); }
@@ -1210,6 +1292,11 @@
 
   // customer search box lives inside a modal that is re-rendered, so listen on the root
   document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'client-q') {
+      var cvalue = e.target.value;
+      clearTimeout(S.custTimer);
+      S.custTimer = setTimeout(function () { send('search-clients', { text: cvalue }); }, 250);
+    }
     if (e.target && e.target.id === 'cust-q') {
       var value = e.target.value;
       clearTimeout(S.custTimer);
@@ -1221,4 +1308,4 @@
   window.POS = { start: start };
   window.Initialize = initialize;   // called by AL: CurrPage.POS.Initialize(...)
   window.Apply = apply;             // called by AL: CurrPage.POS.Apply(...)
-})();
+})();
